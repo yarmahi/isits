@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -55,7 +54,6 @@ export function LoginForm() {
         </div>
         <div>
           <CardTitle className="text-xl">Sign in</CardTitle>
-          <CardDescription>IT Support Intake &amp; Tracking</CardDescription>
         </div>
       </CardHeader>
       <CardContent>
@@ -111,7 +109,7 @@ export function LoginForm() {
           </FieldGroup>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Internal use only
+          Internal
         </p>
       </CardContent>
     </Card>

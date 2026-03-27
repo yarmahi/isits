@@ -178,11 +178,7 @@ export function BranchesSettingsClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold tracking-tight">Branches</h2>
-          <p className="text-sm text-muted-foreground">
-            Locations used when creating intake records. Inactive branches stay
-            in history but can be hidden from new picks where the app filters
-            by active lookups.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage branches</p>
         </div>
         <Button
           type="button"
@@ -218,9 +214,8 @@ export function BranchesSettingsClient({
                     <p className="font-medium text-foreground">
                       No branches yet
                     </p>
-                    <p className="max-w-sm text-sm text-muted-foreground">
-                      Add a branch to use it on new records. You can also run the
-                      lookup seed script for sample data.
+                    <p className="text-sm text-muted-foreground">
+                      Add or seed data.
                     </p>
                     <Button
                       type="button"
@@ -326,8 +321,7 @@ export function BranchesSettingsClient({
                 {dialog?.mode === "edit" ? "Edit branch" : "Add branch"}
               </DialogTitle>
               <DialogDescription>
-                Name appears in record forms and filters. You can deactivate a
-                branch instead of deleting it when records still reference it.
+                Deactivate if referenced by records.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">

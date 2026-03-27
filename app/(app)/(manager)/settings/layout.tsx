@@ -10,9 +10,7 @@ export default function SettingsLayout({
     <div className="space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Lookups, delivery options, and record field rules.
-        </p>
+        <p className="text-sm text-muted-foreground">Configure settings</p>
       </div>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <SettingsNav />

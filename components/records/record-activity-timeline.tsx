@@ -27,9 +27,8 @@ export async function RecordActivityTimeline({
     return (
       <div className="rounded-xl border border-border/80 bg-card p-4 shadow-sm">
         <h2 className="text-sm font-semibold tracking-tight">Activity</h2>
-        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          No logged events for this record yet. Only actions that write to the
-          audit log appear here—some activity may not be captured.
+        <p className="mt-3 text-sm text-muted-foreground">
+          No audit events yet.
         </p>
       </div>
     );

@@ -95,9 +95,7 @@ export default async function RecordsListPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">Records</h1>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Intake queue and case work. Create a record for each machine received.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage records</p>
         </div>
         <Link
           href="/records/new"
@@ -135,8 +133,7 @@ export default async function RecordsListPage({
             <div className="max-w-sm space-y-2">
               <p className="font-medium text-foreground">No records found</p>
               <p className="text-sm text-muted-foreground">
-                Try adjusting search or filters, add a new intake, or reset the
-                list.
+                Adjust filters or add a record.
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">

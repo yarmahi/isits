@@ -180,11 +180,7 @@ export function StatusesSettingsClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold tracking-tight">Statuses</h2>
-          <p className="text-sm text-muted-foreground">
-            Workflow steps for intake records. Lower sort order values appear
-            first where lists are ordered. Inactive statuses can stay on history
-            while hidden from pickers that only show active lookups.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage statuses</p>
         </div>
         <Button
           type="button"
@@ -221,8 +217,8 @@ export function StatusesSettingsClient({
                     <p className="font-medium text-foreground">
                       No statuses yet
                     </p>
-                    <p className="max-w-sm text-sm text-muted-foreground">
-                      Add a status or run the lookup seed script for defaults.
+                    <p className="text-sm text-muted-foreground">
+                      Add or seed data.
                     </p>
                     <Button
                       type="button"
@@ -329,8 +325,7 @@ export function StatusesSettingsClient({
                 {dialog?.mode === "edit" ? "Edit status" : "Add status"}
               </DialogTitle>
               <DialogDescription>
-                Code is a stable key (unique). Use deactivate instead of delete
-                when records still reference this status.
+                Unique code. Deactivate if referenced.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">

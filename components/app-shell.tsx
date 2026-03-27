@@ -42,7 +42,7 @@ const mainNav: NavItem[] = [
 const managerNav: NavItem[] = [
   { href: "/activity", label: "Activity", icon: Activity },
   { href: "/users", label: "Users", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings/branches", label: "Settings", icon: Settings },
 ];
 
 type Theme = "light" | "dark" | "system";
@@ -107,7 +107,9 @@ function NavLinks({
       const active =
         href === "/"
           ? pathname === "/"
-          : pathname === href || pathname.startsWith(`${href}/`);
+          : href === "/settings/branches"
+            ? pathname.startsWith("/settings")
+            : pathname === href || pathname.startsWith(`${href}/`);
       return (
         <Link
           key={href}

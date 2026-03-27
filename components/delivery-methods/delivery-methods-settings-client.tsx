@@ -199,9 +199,7 @@ export function DeliveryMethodsSettingsClient({
             Delivery methods
           </h2>
           <p className="text-sm text-muted-foreground">
-            How equipment reaches the customer. Lower sort order appears first in
-            ordered lists. Inactive methods can remain on history while hidden
-            from active-only pickers.
+            Manage delivery methods
           </p>
         </div>
         <Button
@@ -240,8 +238,8 @@ export function DeliveryMethodsSettingsClient({
                     <p className="font-medium text-foreground">
                       No delivery methods yet
                     </p>
-                    <p className="max-w-sm text-sm text-muted-foreground">
-                      Add a method or run the lookup seed script for defaults.
+                    <p className="text-sm text-muted-foreground">
+                      Add or seed data.
                     </p>
                     <Button
                       type="button"
@@ -353,8 +351,7 @@ export function DeliveryMethodsSettingsClient({
                   : "Add delivery method"}
               </DialogTitle>
               <DialogDescription>
-                Code is a stable key (unique). Deactivate instead of delete when
-                records still reference this method.
+                Unique code. Deactivate if referenced.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">

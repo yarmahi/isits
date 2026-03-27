@@ -77,10 +77,7 @@ export default async function ActivityPage({
     <div className="space-y-8">
       <div className="space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Audit trail: sign-ins, record and user changes, and page views. Secrets
-          are never stored in snapshots.
-        </p>
+        <p className="text-sm text-muted-foreground">Review audit log</p>
       </div>
 
       <ActivityListFilters
@@ -118,8 +115,7 @@ export default async function ActivityPage({
                         No activity matches
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Broaden the date range or clear search to see more log
-                        entries.
+                        Adjust filters.
                       </p>
                     </div>
                     <Link

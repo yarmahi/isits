@@ -40,7 +40,7 @@ export function DashboardCharts({ stats }: Props) {
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="rounded-xl border border-border/80 bg-card p-4 shadow-sm">
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">
-          New records (last 7 days)
+          Last 7 days
         </h3>
         <div className="h-64 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -67,7 +67,7 @@ export function DashboardCharts({ stats }: Props) {
 
       <div className="rounded-xl border border-border/80 bg-card p-4 shadow-sm">
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">
-          Records by status
+          By status
         </h3>
         <div className="h-64 w-full min-w-0">
           {pieData.length === 0 ? (

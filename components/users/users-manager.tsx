@@ -160,10 +160,7 @@ export function UsersManager({
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Manage IT specialist accounts. New accounts are created here — there
-            is no public registration.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage users</p>
         </div>
         <Button
           type="button"
@@ -357,9 +354,7 @@ export function UsersManager({
         <DialogContent className="max-h-[min(90vh,36rem)] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add specialist</DialogTitle>
-            <DialogDescription>
-              They can sign in with the username and temporary password you set.
-            </DialogDescription>
+            <DialogDescription>Set username and password.</DialogDescription>
           </DialogHeader>
           <UserCreateForm
             onFinished={() => setCreateOpen(false)}
@@ -379,7 +374,7 @@ export function UsersManager({
             <>
               <DialogHeader>
                 <DialogTitle>User details</DialogTitle>
-                <DialogDescription>Read-only summary.</DialogDescription>
+                <DialogDescription>Read-only</DialogDescription>
               </DialogHeader>
               <dl className="grid gap-3 text-sm">
                 <div>

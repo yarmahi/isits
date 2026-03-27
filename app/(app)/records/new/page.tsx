@@ -32,9 +32,7 @@ export default async function NewRecordPage() {
       </div>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">New record</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter the details from intake. Record number is assigned when you save.
-        </p>
+        <p className="text-sm text-muted-foreground">Create record</p>
       </div>
       <RecordForm
         mode="create"

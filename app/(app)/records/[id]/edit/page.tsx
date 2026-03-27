@@ -77,9 +77,7 @@ export default async function EditRecordPage({
       </div>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Edit record</h1>
-        <p className="text-sm text-muted-foreground">
-          Update fields as work progresses.
-        </p>
+        <p className="text-sm text-muted-foreground">Update record</p>
       </div>
       <RecordForm
         mode="edit"

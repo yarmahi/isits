@@ -21,7 +21,7 @@ async function main() {
   const uname = (process.env.SEED_MANAGER_USERNAME ?? "manager")
     .trim()
     .toLowerCase();
-  const password = process.env.SEED_MANAGER_PASSWORD ?? "ChangeMe123!";
+  const password = process.env.SEED_MANAGER_PASSWORD ?? "123456";
   const name = process.env.SEED_MANAGER_NAME ?? "System Manager";
   const email = syntheticEmailFromUsername(uname);
 
@@ -61,7 +61,7 @@ async function main() {
 
   console.log("Seeded manager username:", uname);
   console.log(
-    "Sign in with this username and SEED_MANAGER_PASSWORD (default ChangeMe123!).",
+    "Sign in with this username and SEED_MANAGER_PASSWORD (default 123456).",
   );
   await pool.end();
 }

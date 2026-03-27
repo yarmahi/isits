@@ -246,10 +246,7 @@ export function FieldSettingsClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold tracking-tight">Record fields</h2>
-          <p className="text-sm text-muted-foreground">
-            Show or hide optional columns, add custom fields, and control how they
-            appear on records and in search.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage fields</p>
         </div>
         <Button
           type="button"
@@ -289,9 +286,8 @@ export function FieldSettingsClient({
                     <p className="font-medium text-foreground">
                       No field definitions
                     </p>
-                    <p className="max-w-sm text-sm text-muted-foreground">
-                      Run field-definition seeds or add a custom field. System
-                      rows are created by migrations and seeds.
+                    <p className="text-sm text-muted-foreground">
+                      Add or seed data.
                     </p>
                     <Button
                       type="button"
@@ -407,8 +403,7 @@ export function FieldSettingsClient({
             <DialogHeader>
               <DialogTitle>Add custom field</DialogTitle>
               <DialogDescription>
-                Custom fields are stored with each record and can be optional or
-                required. Select types need at least one option.
+                Select type needs options.
               </DialogDescription>
             </DialogHeader>
             <FieldGroup className="gap-3 py-2">

@@ -28,7 +28,7 @@ export default async function HomePage() {
           <p className="mt-2 text-3xl font-semibold tabular-nums">
             {stats.thisWeekRecords}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">New records</p>
+          <p className="mt-1 text-sm text-muted-foreground">Records</p>
         </div>
         <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -37,7 +37,7 @@ export default async function HomePage() {
           <p className="mt-2 text-3xl font-semibold tabular-nums">
             {stats.lastWeekRecords}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">New records</p>
+          <p className="mt-1 text-sm text-muted-foreground">Records</p>
         </div>
         {stats.activeUsers !== undefined && (
           <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm sm:col-span-2 lg:col-span-1">
@@ -47,7 +47,7 @@ export default async function HomePage() {
             <p className="mt-2 text-3xl font-semibold tabular-nums">
               {stats.activeUsers}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">Can sign in</p>
+            <p className="mt-1 text-sm text-muted-foreground">Accounts</p>
           </div>
         )}
       </div>
