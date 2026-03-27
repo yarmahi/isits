@@ -48,11 +48,11 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase C — Statuses CRUD
 
-- [ ] **Server actions** for `statuses`: `code` (unique), `name`, `sort_order`, `is_active`.
-- [ ] **List page** with paginated table; Add / Edit in modals; Delete/deactivate with confirm.
-- [ ] Enforce **unique `code`** on create/update.
-- [ ] Before hard delete, check **FK** usage from `records.status_id`; prefer deactivate when in use.
-- [ ] No list filters; pagination only.
+- [x] **Server actions** for `statuses`: `code` (unique), `name`, `sort_order`, `is_active`.
+- [x] **List page** with paginated table; Add / Edit in modals; Delete/deactivate with confirm.
+- [x] Enforce **unique `code`** on create/update.
+- [x] Before hard delete, check **FK** usage from `records.status_id`; prefer deactivate when in use.
+- [x] No list filters; pagination only.
 
 ---
 
