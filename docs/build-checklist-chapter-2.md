@@ -37,12 +37,12 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase B — Branches CRUD
 
-- [ ] **Server actions** (new or extended `services/` module): paginated list, create, update, delete or **deactivate** for `branches` (`id`, `name`, `is_active`, timestamps).
-- [ ] **List page** at `/settings/branches`: table with columns such as name, active, updated; **no View** column.
-- [ ] **Add** and **Edit** via **modal** (Dialog); validate input server-side.
-- [ ] **Delete** with confirmation; if any `records` reference the branch, **block hard delete** and allow **deactivate** only (or document chosen rule).
-- [ ] **Server-side pagination** (offset/limit); **no** search/filter on the list (per spec).
-- [ ] Empty state when there are no branches.
+- [x] **Server actions** (new or extended `services/` module): paginated list, create, update, delete or **deactivate** for `branches` (`id`, `name`, `is_active`, timestamps).
+- [x] **List page** at `/settings/branches`: table with columns such as name, active, updated; **no View** column.
+- [x] **Add** and **Edit** via **modal** (Dialog); validate input server-side.
+- [x] **Delete** with confirmation; if any `records` reference the branch, **block hard delete** and allow **deactivate** only (or document chosen rule).
+- [x] **Server-side pagination** (offset/limit); **no** search/filter on the list (per spec).
+- [x] Empty state when there are no branches.
 
 ---
 
