@@ -175,6 +175,7 @@ export const records = pgTable(
     index("records_created_by_idx").on(table.createdBy),
     index("records_deleted_at_idx").on(table.deletedAt),
     index("records_status_id_idx").on(table.statusId),
+    index("records_date_received_idx").on(table.dateReceived),
   ],
 );
 

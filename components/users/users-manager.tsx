@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { setUserActiveAction } from "@/services/users";
-import { toastError } from "@/lib/sweet-alert";
+import { toastError, toastSuccess } from "@/lib/sweet-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -142,6 +142,9 @@ export function UsersManager({
     });
     setStatusPending(false);
     if (res.ok) {
+      void toastSuccess(
+        nextActive ? "Account activated" : "Account deactivated",
+      );
       setStatusConfirm(null);
       router.refresh();
     } else {

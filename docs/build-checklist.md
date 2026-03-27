@@ -90,32 +90,32 @@ Use this checklist while implementing the phased plan.
 ## Phase 4 - Records List, Search, Filtering, Sorting, and Pagination
 
 - [ ] Build records list page as the main landing page after login.
-- [ ] Add server-side pagination.
-- [ ] Add global search input.
-- [ ] Add filters for date received range.
-- [ ] Add filters for date returned range.
-- [ ] Add filters for branch.
-- [ ] Add filters for status.
-- [ ] Add filters for delivery method.
-- [ ] Add filters for created by.
-- [ ] Add filters for updated by.
-- [ ] Add filters for archived / active records.
-- [ ] Add "only my records" filter.
-- [ ] Add sorting controls.
-- [ ] Sync all filters and pagination state to the URL.
-- [ ] Build desktop table view.
-- [ ] Build mobile card view.
-- [ ] Add empty-state design.
-- [ ] Add loading-state design.
-- [ ] Create indexes for frequent filters and sort fields.
+- [x] Add server-side pagination.
+- [x] Add global search input.
+- [x] Add filters for date received range.
+- [x] Add filters for date returned range.
+- [x] Add filters for branch.
+- [x] Add filters for status.
+- [x] Add filters for delivery method.
+- [x] Add filters for created by.
+- [x] Add filters for updated by.
+- [x] Add filters for archived / active records.
+- [x] Add "only my records" filter.
+- [x] Add sorting controls.
+- [x] Sync all filters and pagination state to the URL.
+- [x] Build desktop table view.
+- [x] Build mobile card view.
+- [x] Add empty-state design.
+- [x] Add loading-state design.
+- [x] Create indexes for frequent filters and sort fields.
 - [ ] Add duplicate warning checks for serial number and tag number if desired.
 
 ### Phase 4 Done When
 
-- [ ] Users can find records quickly.
-- [ ] Filters are preserved in the URL.
-- [ ] The list works well on phone and desktop.
-- [ ] The page does not rely on client-side full dataset filtering.
+- [x] Users can find records quickly.
+- [x] Filters are preserved in the URL.
+- [x] The list works well on phone and desktop.
+- [x] The page does not rely on client-side full dataset filtering.
 
 ---
 

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { Suspense } from "react";
+import { asc, count, eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { getDb } from "@/db";
-import { records, statuses } from "@/db/schema";
+import { records, statuses, user } from "@/db/schema";
 import { requireAuth } from "@/lib/permissions";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
@@ -15,51 +16,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fetchRecordLookups } from "@/services/records";
+import {
+  buildRecordsListUrl,
+  buildRecordsListWhere,
+  parseRecordsListParams,
+  recordsListOrderBy,
+} from "@/lib/records-list";
+import { RecordsCreatedToast } from "@/components/records/records-created-toast";
+import { RecordsListFilters } from "@/components/records/records-list-filters";
 
-const DEFAULT_PAGE_SIZE = 10;
-
-function parseSearchParams(sp: Record<string, string | string[] | undefined>) {
-  const get = (k: string) => {
-    const v = sp[k];
-    return typeof v === "string" ? v : Array.isArray(v) ? v[0] : undefined;
-  };
-  const pageRaw = parseInt(get("page") ?? "1", 10) || 1;
-  const pageSizeRaw =
-    parseInt(get("pageSize") ?? String(DEFAULT_PAGE_SIZE), 10) ||
-    DEFAULT_PAGE_SIZE;
-  const pageSize = Math.min(50, Math.max(5, pageSizeRaw));
-  return { pageRaw, pageSize };
-}
-
-function buildRecordsUrl(opts: { page: number; pageSize: number }) {
-  const usp = new URLSearchParams();
-  if (opts.page > 1) usp.set("page", String(opts.page));
-  if (opts.pageSize !== DEFAULT_PAGE_SIZE) {
-    usp.set("pageSize", String(opts.pageSize));
-  }
-  const s = usp.toString();
-  return s ? `/records?${s}` : "/records";
-}
-
-/** Records list with pagination (Phase 3–4). */
+/** Records list: search, filters, sort, URL state, pagination, mobile cards (Phase 4). */
 export default async function RecordsListPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const { pageRaw, pageSize } = parseSearchParams(sp);
+  const parsed = parseRecordsListParams(sp);
   const session = await requireAuth();
   const userId = (session.user as { id: string }).id;
   const role = (session.user as { role?: string }).role;
   const isManager = role === "manager";
 
   const db = getDb();
-  const conditions = [isNull(records.deletedAt)];
-  if (!isManager) {
-    conditions.push(eq(records.createdBy, userId));
-  }
-  const whereClause = and(...conditions);
+  const whereClause = buildRecordsListWhere(parsed, { userId, isManager });
 
   const [countRow] = await db
     .select({ total: count() })
@@ -67,8 +48,9 @@ export default async function RecordsListPage({
     .where(whereClause);
 
   const total = Number(countRow?.total ?? 0);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
-  const page = Math.min(Math.max(1, pageRaw), totalPages);
+  const totalPages = Math.max(1, Math.ceil(total / parsed.pageSize) || 1);
+  const page = Math.min(Math.max(1, parsed.page), totalPages);
+  const listState = { ...parsed, page };
 
   const rows = await db
     .select({
@@ -81,12 +63,25 @@ export default async function RecordsListPage({
     .from(records)
     .innerJoin(statuses, eq(records.statusId, statuses.id))
     .where(whereClause)
-    .orderBy(desc(records.createdAt))
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
+    .orderBy(...recordsListOrderBy(parsed.sort))
+    .limit(parsed.pageSize)
+    .offset((page - 1) * parsed.pageSize);
+
+  const lookups = await fetchRecordLookups();
+  const usersForFilter = isManager
+    ? await db
+        .select({ id: user.id, name: user.name })
+        .from(user)
+        .where(eq(user.isActive, true))
+        .orderBy(asc(user.name))
+    : [];
 
   return (
     <div className="space-y-8">
+      <Suspense fallback={null}>
+        <RecordsCreatedToast />
+      </Suspense>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">Records</h1>
@@ -103,89 +98,117 @@ export default async function RecordsListPage({
         </Link>
       </div>
 
-      <form
-        method="get"
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-border/80 bg-card p-4 shadow-sm"
-      >
-        <input type="hidden" name="page" value="1" />
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Per page</span>
-          <select
-            name="pageSize"
-            defaultValue={String(pageSize)}
-            className="flex h-8 cursor-pointer rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-          >
-            {[5, 10, 20, 50].map((n) => (
-              <option key={n} value={String(n)}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className={cn(buttonVariants({ variant: "secondary" }))}>
-          Apply
-        </button>
-      </form>
+      <RecordsListFilters
+        key={buildRecordsListUrl(listState, {})}
+        parsed={parsed}
+        lookups={{
+          branches: lookups.branches.map((b) => ({ id: b.id, name: b.name })),
+          statuses: lookups.statuses.map((s) => ({ id: s.id, name: s.name })),
+          deliveryMethods: lookups.deliveryMethods.map((d) => ({
+            id: d.id,
+            name: d.name,
+          })),
+        }}
+        isManager={isManager}
+        usersForFilter={usersForFilter}
+      />
 
-      <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4">Record</TableHead>
-              <TableHead className="px-4">Customer</TableHead>
-              <TableHead className="px-4">Status</TableHead>
-              <TableHead className="hidden px-4 md:table-cell">Created</TableHead>
-              <TableHead className="px-4 text-right"> </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={5}
-                  className="h-24 text-center text-muted-foreground"
+      <div className="space-y-3">
+        {rows.length === 0 ? (
+          <div className="rounded-xl border border-border/80 bg-card p-8 text-center text-muted-foreground shadow-sm">
+            No records match.{" "}
+            <Link href="/records/new" className="text-primary underline">
+              Create one
+            </Link>
+            {" or "}
+            <Link href="/records" className="text-primary underline">
+              clear filters
+            </Link>
+            .
+          </div>
+        ) : (
+          <>
+            <div className="hidden overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="px-4">Record</TableHead>
+                    <TableHead className="px-4">Customer</TableHead>
+                    <TableHead className="px-4">Status</TableHead>
+                    <TableHead className="px-4">Created</TableHead>
+                    <TableHead className="px-4 text-right"> </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="px-4 font-mono text-sm font-medium">
+                        {r.recordNo}
+                      </TableCell>
+                      <TableCell className="px-4">{r.customerName}</TableCell>
+                      <TableCell className="px-4">{r.statusName}</TableCell>
+                      <TableCell className="px-4 text-muted-foreground">
+                        {r.createdAt.toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </TableCell>
+                      <TableCell className="px-4 text-right">
+                        <Link
+                          href={`/records/${r.id}`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Open
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <TablePagination
+                total={total}
+                page={page}
+                pageSize={parsed.pageSize}
+                buildHref={(p) => buildRecordsListUrl(listState, { page: p })}
+                aria-label="Records pagination"
+              />
+            </div>
+
+            <div className="space-y-3 md:hidden">
+              {rows.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-xl border border-border/80 bg-card p-4 shadow-sm"
                 >
-                  No records yet.{" "}
-                  <Link href="/records/new" className="text-primary underline">
-                    Create one
-                  </Link>
-                  .
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="px-4 font-mono text-sm font-medium">
-                    {r.recordNo}
-                  </TableCell>
-                  <TableCell className="px-4">{r.customerName}</TableCell>
-                  <TableCell className="px-4">{r.statusName}</TableCell>
-                  <TableCell className="hidden px-4 text-muted-foreground md:table-cell">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-mono text-sm font-medium">{r.recordNo}</p>
+                    <Link
+                      href={`/records/${r.id}`}
+                      className="shrink-0 text-sm font-medium text-primary hover:underline"
+                    >
+                      Open
+                    </Link>
+                  </div>
+                  <p className="mt-1 text-sm">{r.customerName}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{r.statusName}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
                     {r.createdAt.toLocaleString(undefined, {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}
-                  </TableCell>
-                  <TableCell className="px-4 text-right">
-                    <Link
-                      href={`/records/${r.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      Open
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          total={total}
-          page={page}
-          pageSize={pageSize}
-          buildHref={(p) => buildRecordsUrl({ page: p, pageSize })}
-          aria-label="Records pagination"
-        />
+                  </p>
+                </div>
+              ))}
+              <TablePagination
+                total={total}
+                page={page}
+                pageSize={parsed.pageSize}
+                buildHref={(p) => buildRecordsListUrl(listState, { page: p })}
+                aria-label="Records pagination"
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

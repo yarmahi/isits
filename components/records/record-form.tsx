@@ -5,12 +5,7 @@ import { useState } from "react";
 import { createRecordAction, updateRecordAction } from "@/services/records";
 import { toastError, toastSuccess } from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -42,15 +37,36 @@ type Props = {
   mode: "create" | "edit";
   lookups: RecordLookups;
   initial?: Initial;
+  /** ISO date `YYYY-MM-DD` for create mode when no initial row exists. */
+  defaultDateReceived?: string;
 };
 
 const textareaClass =
   "flex min-h-24 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30";
 
+function Req() {
+  return (
+    <span className="text-destructive" aria-hidden>
+      {" "}
+      *
+    </span>
+  );
+}
+
 /** Create / edit form for intake records (Phase 3). */
-export function RecordForm({ mode, lookups, initial }: Props) {
+export function RecordForm({
+  mode,
+  lookups,
+  initial,
+  defaultDateReceived,
+}: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+
+  const dateReceivedDefault =
+    mode === "edit" && initial?.dateReceived
+      ? initial.dateReceived
+      : (defaultDateReceived ?? "");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -80,15 +96,19 @@ export function RecordForm({ mode, lookups, initial }: Props) {
     setPending(false);
 
     if (!res.ok) {
-      await toastError("Could not save", "error" in res ? res.error : "Unknown error");
+      await toastError(
+        "Could not save",
+        "error" in res ? res.error : "Unknown error",
+      );
       return;
     }
-    await toastSuccess(mode === "create" ? "Record created" : "Record saved");
     if (mode === "create" && "recordId" in res) {
-      router.push(`/records/${res.recordId}`);
-    } else {
-      router.push(`/records/${initial!.recordId}`);
+      router.push("/records?created=1");
+      router.refresh();
+      return;
     }
+    await toastSuccess("Record saved");
+    router.push(`/records/${initial!.recordId}`);
     router.refresh();
   }
 
@@ -105,13 +125,16 @@ export function RecordForm({ mode, lookups, initial }: Props) {
       <FieldGroup className="gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="dateReceived">Date received</FieldLabel>
+            <FieldLabel htmlFor="dateReceived">
+              Date received
+              <Req />
+            </FieldLabel>
             <Input
               id="dateReceived"
               name="dateReceived"
               type="date"
               required
-              defaultValue={initial?.dateReceived}
+              defaultValue={dateReceivedDefault}
             />
           </Field>
           <Field>
@@ -122,11 +145,13 @@ export function RecordForm({ mode, lookups, initial }: Props) {
               type="date"
               defaultValue={initial?.dateReturned || ""}
             />
-            <FieldDescription>Optional until returned.</FieldDescription>
           </Field>
         </div>
         <Field>
-          <FieldLabel htmlFor="branchId">Branch</FieldLabel>
+          <FieldLabel htmlFor="branchId">
+            Branch
+            <Req />
+          </FieldLabel>
           <select
             id="branchId"
             name="branchId"
@@ -145,7 +170,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
           </select>
         </Field>
         <Field>
-          <FieldLabel htmlFor="pcModel">PC model</FieldLabel>
+          <FieldLabel htmlFor="pcModel">
+            PC model
+            <Req />
+          </FieldLabel>
           <Input
             id="pcModel"
             name="pcModel"
@@ -155,7 +183,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="serialNumber">Serial number</FieldLabel>
+            <FieldLabel htmlFor="serialNumber">
+              Serial number
+              <Req />
+            </FieldLabel>
             <Input
               id="serialNumber"
               name="serialNumber"
@@ -184,7 +215,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="customerName">Customer name</FieldLabel>
+            <FieldLabel htmlFor="customerName">
+              Customer name
+              <Req />
+            </FieldLabel>
             <Input
               id="customerName"
               name="customerName"
@@ -193,7 +227,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="phoneNumber">Phone number</FieldLabel>
+            <FieldLabel htmlFor="phoneNumber">
+              Phone number
+              <Req />
+            </FieldLabel>
             <Input
               id="phoneNumber"
               name="phoneNumber"
@@ -203,7 +240,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
           </Field>
         </div>
         <Field>
-          <FieldLabel htmlFor="statusId">Status</FieldLabel>
+          <FieldLabel htmlFor="statusId">
+            Status
+            <Req />
+          </FieldLabel>
           <select
             id="statusId"
             name="statusId"
@@ -220,7 +260,10 @@ export function RecordForm({ mode, lookups, initial }: Props) {
           </select>
         </Field>
         <Field>
-          <FieldLabel htmlFor="deliveryMethodId">Delivery method</FieldLabel>
+          <FieldLabel htmlFor="deliveryMethodId">
+            Delivery method
+            <Req />
+          </FieldLabel>
           <select
             id="deliveryMethodId"
             name="deliveryMethodId"

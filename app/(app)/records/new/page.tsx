@@ -10,6 +10,7 @@ import { requireAuth } from "@/lib/permissions";
 export default async function NewRecordPage() {
   await requireAuth();
   const lookups = await fetchRecordLookups();
+  const defaultDateReceived = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="space-y-8">
@@ -31,7 +32,11 @@ export default async function NewRecordPage() {
           Enter the details from intake. Record number is assigned when you save.
         </p>
       </div>
-      <RecordForm mode="create" lookups={lookups} />
+      <RecordForm
+        mode="create"
+        lookups={lookups}
+        defaultDateReceived={defaultDateReceived}
+      />
     </div>
   );
 }
