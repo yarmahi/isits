@@ -38,7 +38,6 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 const mainNav: NavItem[] = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/records", label: "Records", icon: ClipboardList },
-  { href: "/profile", label: "Profile", icon: UserRound },
 ];
 
 const managerNav: NavItem[] = [
@@ -106,13 +105,13 @@ function NavLinks({
           href={href}
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
             active
               ? "bg-primary/10 text-foreground"
               : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
           )}
         >
-          <Icon className="size-4 shrink-0 opacity-80" aria-hidden />
+          <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
           {label}
         </Link>
       );

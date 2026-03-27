@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { setUserActiveAction } from "@/services/users";
+import { toastError } from "@/lib/sweet-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +109,6 @@ export function UsersManager({
     nextActive: boolean;
   } | null>(null);
   const [statusPending, setStatusPending] = useState(false);
-  const [statusError, setStatusError] = useState<string | null>(null);
 
   const buildHref = useMemo(
     () => (nextPage: number) =>
@@ -135,7 +135,6 @@ export function UsersManager({
   async function onConfirmStatus() {
     if (!statusConfirm) return;
     const { user, nextActive } = statusConfirm;
-    setStatusError(null);
     setStatusPending(true);
     const res = await setUserActiveAction({
       userId: user.id,
@@ -146,12 +145,15 @@ export function UsersManager({
       setStatusConfirm(null);
       router.refresh();
     } else {
-      setStatusError("error" in res ? res.error : "Could not update status.");
+      void toastError(
+        "Could not update",
+        "error" in res ? res.error : "Could not update status.",
+      );
     }
   }
 
   return (
-    <>
+    <div className="space-y-10">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
@@ -453,10 +455,7 @@ export function UsersManager({
       <Dialog
         open={statusConfirm !== null}
         onOpenChange={(open) => {
-          if (!open) {
-            setStatusConfirm(null);
-            setStatusError(null);
-          }
+          if (!open) setStatusConfirm(null);
         }}
       >
         <DialogContent className="sm:max-w-md" showCloseButton={!statusPending}>
@@ -472,18 +471,12 @@ export function UsersManager({
                     : `${statusConfirm.user.name} will not be able to sign in until reactivated.`}
                 </DialogDescription>
               </DialogHeader>
-              {statusError && (
-                <p className="text-sm text-destructive">{statusError}</p>
-              )}
               <DialogFooter className="gap-2 sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   disabled={statusPending}
-                  onClick={() => {
-                    setStatusConfirm(null);
-                    setStatusError(null);
-                  }}
+                  onClick={() => setStatusConfirm(null)}
                 >
                   Cancel
                 </Button>
@@ -504,6 +497,6 @@ export function UsersManager({
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

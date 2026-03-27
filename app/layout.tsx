@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "sweetalert2/dist/sweetalert2.min.css";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 

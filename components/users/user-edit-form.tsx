@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateUserAction } from "@/services/users";
+import { toastError, toastSuccess } from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -34,13 +35,11 @@ export function UserEditForm({
   onCancel,
 }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(initialActive);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
     const name = String(fd.get("name") ?? "");
@@ -56,9 +55,13 @@ export function UserEditForm({
     });
     setPending(false);
     if (!res.ok) {
-      setError("error" in res ? res.error : "Something went wrong.");
+      await toastError(
+        "Could not save",
+        "error" in res ? res.error : "Something went wrong.",
+      );
       return;
     }
+    await toastSuccess("User saved");
     router.refresh();
     onFinished?.();
   }
@@ -124,9 +127,6 @@ export function UserEditForm({
               Account active (can sign in)
             </FieldLabel>
           </Field>
-        )}
-        {error && (
-          <FieldDescription className="text-destructive">{error}</FieldDescription>
         )}
       </FieldGroup>
       <DialogFooter className="gap-2 sm:justify-end">

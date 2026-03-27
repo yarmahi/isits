@@ -1,7 +1,10 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -92,6 +95,89 @@ export const appMeta = pgTable("app_meta", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
+/** Branch locations for intake records. */
+export const branches = pgTable("branches", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+/** Workflow statuses for a record. */
+export const statuses = pgTable("statuses", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+});
+
+/** How equipment is delivered (lookup). */
+export const deliveryMethods = pgTable("delivery_methods", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+/** Core intake / repair tracking record (Excel-equivalent fields + system columns). */
+export const records = pgTable(
+  "records",
+  {
+    id: text("id").primaryKey(),
+    recordNo: text("record_no").notNull().unique(),
+    dateReceived: date("date_received").notNull(),
+    dateReturned: date("date_returned"),
+    branchId: text("branch_id")
+      .notNull()
+      .references(() => branches.id),
+    pcModel: text("pc_model").notNull(),
+    serialNumber: text("serial_number").notNull(),
+    tagNumber: text("tag_number"),
+    maintenanceNote: text("maintenance_note"),
+    customerName: text("customer_name").notNull(),
+    phoneNumber: text("phone_number").notNull(),
+    statusId: text("status_id")
+      .notNull()
+      .references(() => statuses.id),
+    deliveryMethodId: text("delivery_method_id")
+      .notNull()
+      .references(() => deliveryMethods.id),
+    customData: jsonb("custom_data")
+      .$type<Record<string, unknown>>()
+      .default({})
+      .notNull(),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id),
+    updatedBy: text("updated_by")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [
+    index("records_created_at_idx").on(table.createdAt),
+    index("records_created_by_idx").on(table.createdBy),
+    index("records_deleted_at_idx").on(table.deletedAt),
+    index("records_status_id_idx").on(table.statusId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -108,5 +194,42 @@ export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
+  }),
+}));
+
+export const branchesRelations = relations(branches, ({ many }) => ({
+  records: many(records),
+}));
+
+export const statusesRelations = relations(statuses, ({ many }) => ({
+  records: many(records),
+}));
+
+export const deliveryMethodsRelations = relations(deliveryMethods, ({ many }) => ({
+  records: many(records),
+}));
+
+export const recordsRelations = relations(records, ({ one }) => ({
+  branch: one(branches, {
+    fields: [records.branchId],
+    references: [branches.id],
+  }),
+  status: one(statuses, {
+    fields: [records.statusId],
+    references: [statuses.id],
+  }),
+  deliveryMethod: one(deliveryMethods, {
+    fields: [records.deliveryMethodId],
+    references: [deliveryMethods.id],
+  }),
+  creator: one(user, {
+    fields: [records.createdBy],
+    references: [user.id],
+    relationName: "recordCreator",
+  }),
+  updater: one(user, {
+    fields: [records.updatedBy],
+    references: [user.id],
+    relationName: "recordUpdater",
   }),
 }));

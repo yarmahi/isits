@@ -57,33 +57,33 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 3 - Core Records Module
 
-- [ ] Create records table with all required Excel fields.
-- [ ] Add system fields: `id`, `record_no`, `created_by`, `updated_by`, timestamps, `deleted_at`.
-- [ ] Add `custom_data` JSONB column now, even if it is not used yet.
-- [ ] Create branches table.
-- [ ] Create statuses table.
-- [ ] Create `delivery_methods` lookup table (same pattern as branches/statuses).
-- [ ] Seed default statuses.
-- [ ] Seed default delivery methods.
-- [ ] Build create record page.
-- [ ] Build edit record page.
-- [ ] Build record detail page.
-- [ ] Show created by / updated by metadata on the detail page.
-- [ ] Implement record number generation.
-- [ ] Build archive action instead of hard delete.
-- [ ] Build restore action for archived records.
-- [ ] Ensure specialists can edit only their own records.
-- [ ] Ensure manager can edit any record.
-- [ ] Ensure all record writes go through service functions.
-- [ ] Add server-side validation for all record payloads.
+- [x] Create records table with all required Excel fields.
+- [x] Add system fields: `id`, `record_no`, `created_by`, `updated_by`, timestamps, `deleted_at`.
+- [x] Add `custom_data` JSONB column now, even if it is not used yet.
+- [x] Create branches table.
+- [x] Create statuses table.
+- [x] Create `delivery_methods` lookup table (same pattern as branches/statuses).
+- [x] Seed default statuses.
+- [x] Seed default delivery methods.
+- [x] Build create record page.
+- [x] Build edit record page.
+- [x] Build record detail page.
+- [x] Show created by / updated by metadata on the detail page.
+- [x] Implement record number generation.
+- [x] Build archive action instead of hard delete.
+- [x] Build restore action for archived records.
+- [x] Ensure specialists can edit only their own records.
+- [x] Ensure manager can edit any record.
+- [x] Ensure all record writes go through service functions.
+- [x] Add server-side validation for all record payloads.
 
 ### Phase 3 Done When
 
-- [ ] A specialist can create a record.
-- [ ] A specialist can edit their own record.
-- [ ] A specialist cannot edit another specialist's record.
-- [ ] A manager can edit any record.
-- [ ] A manager can archive and restore records.
+- [x] A specialist can create a record.
+- [x] A specialist can edit their own record.
+- [x] A specialist cannot edit another specialist's record.
+- [x] A manager can edit any record.
+- [x] A manager can archive and restore records.
 
 ---
 

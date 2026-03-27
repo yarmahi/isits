@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { username } from "better-auth/plugins/username";
+import { APIError } from "@better-auth/core/error";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import * as schema from "@/db/schema";
@@ -59,7 +60,11 @@ export const auth = betterAuth({
             .limit(1);
           const u = rows[0];
           if (!u?.isActive) {
-            return false;
+            throw APIError.from("FORBIDDEN", {
+              code: "ACCOUNT_DEACTIVATED",
+              message:
+                "Your account is deactivated. Please contact an administrator.",
+            });
           }
         },
       },

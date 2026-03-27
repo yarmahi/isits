@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { mapLoginErrorMessage } from "@/lib/login-errors";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,10 @@ export function LoginForm() {
     });
     setPending(false);
     if (res.error) {
-      setError(res.error.message ?? "Could not sign in.");
+      const raw =
+        (res.error as { message?: string; code?: string }).message ??
+        (res.error as { code?: string }).code;
+      setError(mapLoginErrorMessage(typeof raw === "string" ? raw : undefined));
       return;
     }
     window.location.assign("/records");
@@ -51,12 +55,18 @@ export function LoginForm() {
         </div>
         <div>
           <CardTitle className="text-xl">Sign in</CardTitle>
-          <CardDescription>
-            IT Support Intake &amp; Tracking — internal use only
-          </CardDescription>
+          <CardDescription>IT Support Intake &amp; Tracking</CardDescription>
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-left text-sm text-destructive"
+          >
+            {error}
+          </div>
+        )}
         <form onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
@@ -87,11 +97,6 @@ export function LoginForm() {
               />
               <FieldDescription>At least 6 characters.</FieldDescription>
             </Field>
-            {error && (
-              <FieldDescription className="text-destructive">
-                {error}
-              </FieldDescription>
-            )}
             <Field>
               <Button type="submit" className="w-full gap-2" disabled={pending}>
                 <LogIn className="size-4 opacity-80" aria-hidden />
@@ -100,6 +105,9 @@ export function LoginForm() {
             </Field>
           </FieldGroup>
         </form>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Internal use only
+        </p>
       </CardContent>
     </Card>
   );
