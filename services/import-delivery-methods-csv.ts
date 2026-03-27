@@ -13,12 +13,13 @@ import {
   parseSortOrder,
 } from "@/lib/import-csv-parse";
 import type { ImportCsvResult } from "@/lib/import-csv-types";
+import {
+  IMPORT_CSV_MAX_BYTES,
+  IMPORT_CSV_MAX_ROWS_LOOKUP,
+} from "@/lib/import-csv-limits";
 import { validateCsvImport } from "@/lib/import-csv-validate";
 import { parseCsvKeyedRows } from "@/lib/parse-csv";
 import { requireManager } from "@/lib/permissions";
-
-const MAX_BYTES = 2 * 1024 * 1024;
-const MAX_ROWS = 5000;
 
 /**
  * Delivery methods CSV import (Phase D). Same rules as statuses import: unique `code`.
@@ -35,7 +36,7 @@ export async function importDeliveryMethodsCsvAction(
   const text = await file.text();
   const pre = validateCsvImport(file.name, text);
   if (!pre.ok) return pre;
-  if (text.length > MAX_BYTES) {
+  if (text.length > IMPORT_CSV_MAX_BYTES) {
     return { ok: false, error: "File too large (max 2 MB)." };
   }
 
@@ -45,8 +46,11 @@ export async function importDeliveryMethodsCsvAction(
   if (rows.length === 0) {
     return { ok: false, error: "No data rows in CSV." };
   }
-  if (rows.length > MAX_ROWS) {
-    return { ok: false, error: `Too many rows (max ${MAX_ROWS}).` };
+  if (rows.length > IMPORT_CSV_MAX_ROWS_LOOKUP) {
+    return {
+      ok: false,
+      error: `Too many rows (max ${IMPORT_CSV_MAX_ROWS_LOOKUP}).`,
+    };
   }
   if (!("code" in rows[0]) || !("name" in rows[0])) {
     return {

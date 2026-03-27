@@ -46,3 +46,7 @@ npm run build
 ## Health check
 
 The app exposes `GET /api/health` (and `/health` page) for uptime checks.
+
+## CSV import limits (Settings + Records)
+
+Enforced in `lib/import-csv-limits.ts`: **2 MB** max file size, **5000** rows for branches/statuses/delivery imports, **2000** rows for records legacy import. Larger files are rejected before parsing.

@@ -83,7 +83,11 @@ export function toastError(title: string, text?: string) {
   });
 }
 
-export function toastWarning(title: string, text?: string) {
+export function toastWarning(
+  title: string,
+  text?: string,
+  timerMs: number = MIN_TIMER_MS,
+) {
   return Swal.fire({
     icon: "warning",
     title,
@@ -91,7 +95,7 @@ export function toastWarning(title: string, text?: string) {
     toast: true,
     position: "top-end",
     showConfirmButton: false,
-    timer: MIN_TIMER_MS,
+    timer: timerMs,
     timerProgressBar: true,
     didOpen: raiseToastContainer,
   });

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileUp } from "lucide-react";
 import { buildCsvContent } from "@/lib/csv-template";
 import type { ImportCsvResult } from "@/lib/import-csv-types";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import { toastError, toastSuccess, toastWarning } from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -79,10 +79,25 @@ export function ImportCsvDialog({
         await toastError("Import failed", res.error);
         return;
       }
-      await toastSuccess(
-        "Import finished",
-        res.message ?? "File accepted.",
-      );
+      if (res.rowFailures?.length) {
+        const lines = res.rowFailures
+          .slice(0, 12)
+          .map((f) => `Row ${f.row}: ${f.reason}`);
+        const tail =
+          res.rowFailures.length > 12
+            ? `\n…${res.rowFailures.length - 12} more`
+            : "";
+        await toastWarning(
+          "Import finished with errors",
+          [res.message ?? "Done.", "", ...lines].join("\n") + tail,
+          18_000,
+        );
+      } else {
+        await toastSuccess(
+          "Import finished",
+          res.message ?? "File accepted.",
+        );
+      }
       onSuccess?.();
       resetAndClose();
     } finally {

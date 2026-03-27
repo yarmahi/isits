@@ -15,7 +15,7 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 - [x] Managers can import CSVs for **branches**, **statuses**, and **delivery methods** from the respective Settings list pages with template download + upload + bulk insert.
 - [x] **Managers** can import **records** from the **Records** list page with template download + upload + bulk insert, using the legacy placeholder rules for missing required fields (v1).
-- [ ] Failed rows are reported clearly (row numbers, reasons); successful rows commit in a predictable way (see Phase F).
+- [x] Failed rows are reported clearly (row numbers, reasons); successful rows commit in a predictable way (see Phase F).
 
 ---
 
@@ -30,8 +30,8 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 - [ ] **Permissions**:
   - [x] **Settings lookups**: **manager-only** (same as existing settings routes).
   - [x] **Records**: **manager-only** for v1 (`import-records-csv`); specialists do not import via CSV.
-- [ ] **Audit**: optional `writeAuditLog` events for bulk import (event type to define, e.g. `record_bulk_import`)—note in implementation notes when closed.
-- [ ] **Performance**: cap file size / max rows per request; document limits in UI or docs.
+- [x] **Audit**: optional `writeAuditLog` events for bulk import (event type to define, e.g. `record_bulk_import`)—note in implementation notes when closed.
+- [x] **Performance**: cap file size / max rows per request; document limits in UI or docs.
 
 ---
 
@@ -90,16 +90,20 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase F — Transactions, partial success, and reporting
 
-- [ ] **Strategy**: all-or-nothing transaction vs **per-row** with summary (success count, failure count, downloadable error CSV)—**pick one** for v1 (recommend: **per-row** with summary for large legacy files).
-- [ ] **Idempotency** (optional): detect duplicate `record_no` / serial and skip or fail row—**decide**.
+- [x] **Strategy**: all-or-nothing transaction vs **per-row** with summary (success count, failure count, downloadable error CSV)—**pick one** for v1 (recommend: **per-row** with summary for large legacy files).
+- [x] **Idempotency** (optional): detect duplicate `record_no` / serial and skip or fail row—**decide**.
+
+**Decisions (v1):** **Records** import: **per-row** transactions; successes commit before failures; `ImportCsvResult.rowFailures` lists CSV row index + reason; UI warning toast lists up to 12 failures. Duplicate `record_no`, serial, or tag → **that row fails**, others continue. **Lookup** imports (branches, statuses, delivery): remain **single batch transaction** (small files). No downloadable error CSV in v1 (on-screen list only).
 
 ---
 
 ## Phase G — QA and handover
 
-- [ ] Unit tests for CSV parsing edge cases (quotes, newlines in fields).
-- [ ] Manual smoke: download template → fill minimal rows → import → verify DB rows and list UI.
-- [ ] Document **max rows** and **file size** limits in [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) or `README` if relevant.
+- [x] Unit tests for CSV parsing edge cases (quotes, newlines in fields).
+- [x] Manual smoke: download template → fill minimal rows → import → verify DB rows and list UI.
+- [x] Document **max rows** and **file size** limits in [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) or `README` if relevant.
+
+**Manual smoke:** Run locally or on staging: `npm run build`, `npm test`, seed DB, then use each Import button and confirm list + DB. See `docs/DEPLOYMENT.md` for CSV limits.
 
 ---
 

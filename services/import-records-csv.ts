@@ -12,15 +12,16 @@ import {
 } from "@/db/schema";
 import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
 import { ImportRowError } from "@/lib/import-csv-errors";
-import type { ImportCsvResult } from "@/lib/import-csv-types";
+import type { CsvRowFailure, ImportCsvResult } from "@/lib/import-csv-types";
+import {
+  IMPORT_CSV_MAX_BYTES,
+  IMPORT_CSV_MAX_ROWS_RECORDS,
+} from "@/lib/import-csv-limits";
 import { validateCsvImport } from "@/lib/import-csv-validate";
 import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { generateNextRecordNo, type RecordNoDb } from "@/lib/record-no";
 import { parseCsvKeyedRows } from "@/lib/parse-csv";
 import { requireManager } from "@/lib/permissions";
-
-const MAX_BYTES = 2 * 1024 * 1024;
-const MAX_ROWS = 2000;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -36,6 +37,9 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
  * `date_received` → today (UTC); `serial_number` → `legacy-sn-<row>-<suffix>`;
  * `customer_name` → `Legacy import`; `phone_number` → `n/a`; `pc_model` → `Unknown`.
  * Required custom fields get `"legacy-import"` in `custom_data`.
+ *
+ * **Phase F:** Each row commits in its own transaction. Failures are collected;
+ * duplicate `record_no` / serial / tag → that row fails, others still import.
  */
 export async function importRecordsCsvAction(
   formData: FormData,
@@ -50,7 +54,7 @@ export async function importRecordsCsvAction(
   const text = await file.text();
   const pre = validateCsvImport(file.name, text);
   if (!pre.ok) return pre;
-  if (text.length > MAX_BYTES) {
+  if (text.length > IMPORT_CSV_MAX_BYTES) {
     return { ok: false, error: "File too large (max 2 MB)." };
   }
 
@@ -60,8 +64,11 @@ export async function importRecordsCsvAction(
   if (rows.length === 0) {
     return { ok: false, error: "No data rows in CSV." };
   }
-  if (rows.length > MAX_ROWS) {
-    return { ok: false, error: `Too many rows (max ${MAX_ROWS}).` };
+  if (rows.length > IMPORT_CSV_MAX_ROWS_RECORDS) {
+    return {
+      ok: false,
+      error: `Too many rows (max ${IMPORT_CSV_MAX_ROWS_RECORDS}).`,
+    };
   }
   const h0 = rows[0];
   if (
@@ -146,13 +153,14 @@ export async function importRecordsCsvAction(
     );
   }
 
+  const rowFailures: CsvRowFailure[] = [];
   let inserted = 0;
-  try {
-    await db.transaction(async (tx) => {
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const rowNum = i + 2;
 
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 2;
+    try {
+      await db.transaction(async (tx) => {
         const branchId = resolveBranch(row.branch_id ?? "", rowNum);
         const statusId = resolveStatus(row.status_id ?? "", rowNum);
         const deliveryMethodId = resolveDelivery(
@@ -272,18 +280,15 @@ export async function importRecordsCsvAction(
           createdBy: userId,
           updatedBy: userId,
         });
-        inserted++;
-      }
-    });
-  } catch (e) {
-    if (e instanceof ImportRowError) {
-      return { ok: false, error: e.message };
+      });
+      inserted++;
+    } catch (e) {
+      rowFailures.push({
+        row: rowNum,
+        reason: importFailureReason(e),
+      });
     }
-    throw e;
   }
-
-  revalidatePath("/records");
-  revalidatePath("/");
 
   const meta = await getRequestMetaFromHeaders();
   await writeAuditLog({
@@ -292,14 +297,62 @@ export async function importRecordsCsvAction(
     entityType: "record",
     route: "/records",
     httpMethod: "POST",
-    metadata: { rowsImported: inserted },
+    metadata: {
+      rowsImported: inserted,
+      rowsFailed: rowFailures.length,
+    },
     ...meta,
   });
 
+  if (inserted === 0 && rowFailures.length > 0) {
+    const sample = rowFailures
+      .slice(0, 5)
+      .map((f) => `Row ${f.row}: ${f.reason}`)
+      .join(" ");
+    return {
+      ok: false,
+      error:
+        rowFailures.length === 1
+          ? rowFailures[0].reason
+          : `No rows imported. ${sample}${
+              rowFailures.length > 5
+                ? ` (+${rowFailures.length - 5} more)`
+                : ""
+            }`,
+    };
+  }
+
+  if (inserted > 0) {
+    revalidatePath("/records");
+    revalidatePath("/");
+  }
+
+  const msgParts = [
+    `${inserted} record${inserted === 1 ? "" : "s"} imported.`,
+  ];
+  if (rowFailures.length > 0) {
+    msgParts.push(`${rowFailures.length} row(s) failed (see details).`);
+  }
+
   return {
     ok: true,
-    message: `${inserted} record${inserted === 1 ? "" : "s"} imported.`,
+    message: msgParts.join(" "),
+    rowFailures: rowFailures.length > 0 ? rowFailures : undefined,
   };
+}
+
+function importFailureReason(e: unknown): string {
+  if (e instanceof ImportRowError) {
+    return e.message.replace(/^Row \d+: /, "");
+  }
+  if (e instanceof Error) {
+    const code = (e as { code?: string }).code;
+    if (code === "23505") {
+      return "Duplicate value (record no., serial, or other unique field).";
+    }
+    return e.message;
+  }
+  return String(e);
 }
 
 function todayUtc(): string {
