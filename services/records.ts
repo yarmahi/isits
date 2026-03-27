@@ -3,37 +3,18 @@
 import { randomUUID } from "crypto";
 import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { getDb } from "@/db";
 import { branches, deliveryMethods, records, statuses } from "@/db/schema";
 import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
 import { formatZodError } from "@/lib/format-zod-error";
 import { loadRecordFieldConfig } from "@/lib/record-field-config";
+import {
+  recordFieldsSchema,
+  updateRecordPayloadSchema,
+} from "@/lib/record-payload-schema";
 import { generateNextRecordNo } from "@/lib/record-no";
 import { requireAuth, requireManager } from "@/lib/permissions";
-
-const dateStr = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date");
-const optionalDateStr = z
-  .union([z.literal(""), dateStr])
-  .optional()
-  .transform((v) => (v === "" || v === undefined ? undefined : v));
-
-const recordFieldsSchema = z.object({
-  dateReceived: dateStr,
-  dateReturned: optionalDateStr,
-  branchId: z.string().min(1, "Select a branch"),
-  pcModel: z.string().min(1).max(500),
-  serialNumber: z.string().min(1).max(500),
-  tagNumber: z.string().max(500).optional(),
-  maintenanceNote: z.string().max(10000).optional(),
-  customerName: z.string().min(1).max(500),
-  phoneNumber: z.string().min(1).max(80),
-  statusId: z.string().min(1, "Select a status"),
-  deliveryMethodId: z.string().min(1, "Select a delivery method"),
-  customData: z.record(z.string(), z.unknown()).optional(),
-});
+import { z } from "zod";
 
 /** Other **active** (non-archived) rows only; same serial/tag allowed again after archive. */
 async function findActiveSerialDuplicate(
@@ -172,15 +153,11 @@ export async function createRecordAction(input: unknown) {
   return { ok: true as const, recordId: id };
 }
 
-const updateSchema = recordFieldsSchema.extend({
-  recordId: z.string().min(1),
-});
-
 export async function updateRecordAction(input: unknown) {
   const session = await requireAuth();
   const userId = (session.user as { id: string }).id;
   const role = (session.user as { role?: string }).role;
-  const parsedResult = updateSchema.safeParse(input);
+  const parsedResult = updateRecordPayloadSchema.safeParse(input);
   if (!parsedResult.success) {
     return { ok: false as const, error: formatZodError(parsedResult.error) };
   }

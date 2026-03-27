@@ -210,28 +210,28 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 8 - Testing, Deployment, and Handover
 
-- [ ] Add permission tests.
-- [ ] Add record service tests.
-- [ ] Add audit logging tests.
-- [ ] Add end-to-end login test.
-- [ ] Add end-to-end create record test.
-- [ ] Add end-to-end edit record test.
-- [ ] Add end-to-end record filtering test.
-- [ ] Add end-to-end activity log visibility test.
-- [ ] Prepare production environment variables.
-- [ ] Create seed script for manager, statuses, branches, and delivery methods.
-- [ ] Write local setup instructions.
-- [ ] Write deployment instructions.
-- [ ] Write backup/migration notes.
-- [ ] Write short maintenance README.
-- [ ] Verify migrations can run in a clean environment.
-- [ ] Verify the app can be started by a new developer following the README.
+- [x] Add permission tests.
+- [x] Add record service tests.
+- [x] Add audit logging tests.
+- [x] Add end-to-end login test.
+- [x] Add end-to-end create record test.
+- [x] Add end-to-end edit record test.
+- [x] Add end-to-end record filtering test.
+- [x] Add end-to-end activity log visibility test.
+- [x] Prepare production environment variables.
+- [x] Create seed script for manager, statuses, branches, and delivery methods.
+- [x] Write local setup instructions.
+- [x] Write deployment instructions.
+- [x] Write backup/migration notes.
+- [x] Write short maintenance README.
+- [x] Verify migrations can run in a clean environment.
+- [x] Verify the app can be started by a new developer following the README.
 
 ### Phase 8 Done When
 
-- [ ] The project can be deployed.
-- [ ] The core workflows are tested.
-- [ ] The team can maintain the codebase after handover.
+- [x] The project can be deployed.
+- [x] The core workflows are tested.
+- [x] The team can maintain the codebase after handover.
 
 ---
 

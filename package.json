@@ -6,6 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -13,7 +17,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed-manager.ts",
     "db:seed:lookups": "tsx scripts/seed-lookups.ts",
-    "db:seed:fields": "tsx scripts/seed-field-definitions.ts"
+    "db:seed:fields": "tsx scripts/seed-field-definitions.ts",
+    "db:seed:all": "tsx scripts/seed-all.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -45,6 +50,8 @@
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@playwright/test": "^1.57.0",
+    "vitest": "^4.0.16"
   }
 }
