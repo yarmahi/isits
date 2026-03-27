@@ -77,15 +77,15 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase F — Record detail: two-column layout and timeline
 
-- [ ] Refactor **`app/(app)/records/[id]/page.tsx`** to a **two-column** layout:
-  - [ ] **Desktop**: ~**75% / 25%** split (grid or flex); **mobile**: stack with **main content first**, timeline below.
-- [ ] **Left column**: polished **key : value** layout for all visible fields (core, lookups, optional system fields, custom fields); optional **section** groupings (e.g. Intake, Customer, Additional).
-- [ ] **Right column**: **activity timeline** styled like a compact revision history (vertical line, dots, relative or short timestamps).
-- [ ] Query **`activity_logs`** where `entity_type = 'record'` and `entity_id` matches the record id; order by `created_at` descending (newest first or reverse for “story” order—pick one and keep consistent).
-- [ ] Join **actor** display name when `actor_user_id` is present.
-- [ ] Map **`event_type`** values to short, human-readable labels (e.g. record create/update/archive/restore).
-- [ ] **Empty state** when no audit rows exist for this record (explain that only logged events appear).
-- [ ] Optional: **Suspense** / skeleton for the timeline segment.
+- [x] Refactor **`app/(app)/records/[id]/page.tsx`** to a **two-column** layout:
+  - [x] **Desktop**: ~**75% / 25%** split (grid or flex); **mobile**: stack with **main content first**, timeline below.
+- [x] **Left column**: polished **key : value** layout for all visible fields (core, lookups, optional system fields, custom fields); optional **section** groupings (e.g. Intake, Customer, Additional).
+- [x] **Right column**: **activity timeline** styled like a compact revision history (vertical line, dots, relative or short timestamps).
+- [x] Query **`activity_logs`** where `entity_type = 'record'` and `entity_id` matches the record id; order by `created_at` descending (newest first or reverse for “story” order—pick one and keep consistent).
+- [x] Join **actor** display name when `actor_user_id` is present.
+- [x] Map **`event_type`** values to short, human-readable labels (e.g. record create/update/archive/restore).
+- [x] **Empty state** when no audit rows exist for this record (explain that only logged events appear).
+- [x] Optional: **Suspense** / skeleton for the timeline segment.
 
 **Note:** Events that never set `entity_id` will not appear in this sidebar—coverage is **best-effort** based on existing audit logging.
 
