@@ -93,9 +93,23 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase G — QA and handover
 
-- [ ] Confirm **manager-only** access on new settings routes (reuse `requireManager` / manager layout).
-- [ ] Smoke-test: create/edit/deactivate lookup rows; create record using new data; open record detail and verify timeline.
-- [ ] Optional follow-up: add or extend **Vitest** / **Playwright** cases for new settings routes and record detail (not blocking Chapter 2 doc completion).
+- [x] Confirm **manager-only** access on new settings routes (reuse `requireManager` / manager layout).
+- [x] Smoke-test: create/edit/deactivate lookup rows; create record using new data; open record detail and verify timeline.
+- [x] Optional follow-up: add or extend **Vitest** / **Playwright** cases for new settings routes and record detail (not blocking Chapter 2 doc completion).
+
+**Access verification (code review):**
+
+- All settings UI lives under `app/(app)/(manager)/` → **`layout.tsx`** calls **`requireManager()`** before any child route (including `/settings` and redirects).
+- Each settings **`page.tsx`** (branches, statuses, delivery-methods, fields) also **`await requireManager()`** before data loaders.
+- Lookup and field-definition **server actions** in `services/branches.ts`, `services/statuses.ts`, `services/delivery-methods.ts`, `services/field-definitions.ts` each call **`requireManager()`** on every mutation and list fetch used by Settings.
+
+**Handover smoke checklist (run before release / after deploy):**
+
+1. **Manager**: open `/settings` → lands on branches; exercise **Branches**, **Statuses**, **Delivery methods**, **Record fields** nav; add or edit one row and confirm the table refreshes; try **deactivate** and **delete** (where allowed).
+2. **Specialist** (non-manager): visiting `/settings` or `/settings/branches` should **not** show settings (redirect / unauthorized per `requireManager`).
+3. **Record**: create or open a record; on **`/records/[id]`** confirm **two-column** layout and **Activity** sidebar; after create/update/archive/restore, confirm timeline entries when audit logging fired.
+
+**Automated tests:** `tests/record-activity.test.ts` covers timeline **event label** mapping. Full route E2E remains optional (Playwright).
 
 ---
 
