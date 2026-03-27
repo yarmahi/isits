@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { FileUp } from "lucide-react";
 import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
 import { Button } from "@/components/ui/button";
 import { RECORDS_IMPORT } from "@/lib/import-csv-templates";
-import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
+import { importRecordsCsvFromFile } from "@/lib/records-import-csv-client";
 
-/** Records list header: opens shared CSV import dialog (Phase A stub). */
-export function RecordsCsvImportButton() {
+type Props = { showImport: boolean };
+
+/** Records list header: legacy CSV import (managers only). */
+export function RecordsCsvImportButton({ showImport }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  if (!showImport) return null;
 
   return (
     <>
@@ -26,11 +32,12 @@ export function RecordsCsvImportButton() {
         open={open}
         onOpenChange={setOpen}
         title="Import records"
-        description="Legacy migration: download the sample CSV, then upload a filled file."
+        description="Managers only. Blank cells get legacy placeholders; lookups accept id or code/name."
         templateFilename={RECORDS_IMPORT.filename}
         headers={RECORDS_IMPORT.headers}
         exampleRow={RECORDS_IMPORT.exampleRow}
-        onImport={stubCsvImportFromFile}
+        onImport={importRecordsCsvFromFile}
+        onSuccess={() => router.refresh()}
       />
     </>
   );

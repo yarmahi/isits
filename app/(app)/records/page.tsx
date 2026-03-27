@@ -99,7 +99,7 @@ export default async function RecordsListPage({
           <p className="text-sm text-muted-foreground">Manage records</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          <RecordsCsvImportButton />
+          <RecordsCsvImportButton showImport={isManager} />
           <Link
             href="/records/new"
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}

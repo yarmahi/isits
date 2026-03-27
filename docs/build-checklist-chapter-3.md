@@ -13,8 +13,8 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ### Chapter 3 done when
 
-- [ ] Managers can import CSVs for **branches**, **statuses**, and **delivery methods** from the respective Settings list pages with template download + upload + bulk insert.
-- [ ] Authorized users can import **records** from the **Records** list page with template download + upload + bulk insert, using the legacy placeholder rules for missing required fields.
+- [x] Managers can import CSVs for **branches**, **statuses**, and **delivery methods** from the respective Settings list pages with template download + upload + bulk insert.
+- [x] **Managers** can import **records** from the **Records** list page with template download + upload + bulk insert, using the legacy placeholder rules for missing required fields (v1).
 - [ ] Failed rows are reported clearly (row numbers, reasons); successful rows commit in a predictable way (see Phase F).
 
 ---
@@ -28,8 +28,8 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 - [x] **Parsing**: robust handling of UTF-8, quoted fields, commas in values (use a vetted CSV parser or well-tested split rules—document choice). **Implementation:** [papaparse](https://www.papaparse.com/) via `lib/parse-csv.ts` (Phase B+).
 - [ ] **Validation**: row-level errors; block or partial-apply policy chosen in Phase F.
 - [ ] **Permissions**:
-  - [ ] **Settings lookups**: **manager-only** (same as existing settings routes).
-  - [ ] **Records**: match existing product rules (e.g. specialists create/import own scope vs manager org-wide—**decide and implement**; default suggestion: **manager-only** for first version to reduce abuse, unless product requires specialists to import legacy rows).
+  - [x] **Settings lookups**: **manager-only** (same as existing settings routes).
+  - [x] **Records**: **manager-only** for v1 (`import-records-csv`); specialists do not import via CSV.
 - [ ] **Audit**: optional `writeAuditLog` events for bulk import (event type to define, e.g. `record_bulk_import`)—note in implementation notes when closed.
 - [ ] **Performance**: cap file size / max rows per request; document limits in UI or docs.
 
@@ -77,12 +77,14 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase E — Records CSV import (legacy)
 
-- [ ] **Template columns** cover core fields: e.g. `record_no` (or auto-generate if empty—**decide**), `date_received`, `date_returned`, `branch_id` or branch key column, `pc_model`, `serial_number`, `tag_number`, `maintenance_note`, `customer_name`, `phone_number`, `status_id` or status key, `delivery_method_id` or delivery key, optional custom columns → `custom_data` JSON mapping—**finalize column list** when implementing.
-- [ ] **Legacy rule**: if a **required** DB field is missing/blank in CSV, set a **placeholder** (e.g. `serial_number` → `legacy-import-<rowIndex>` or `legacy-s/n-<rowIndex>`; same idea for other required strings—**must be unique** where the schema requires uniqueness, e.g. `record_no`, `serial_number` if deduped).
-- [ ] **Lookup resolution**: map branch/status/delivery by **id** (preferred for stability) and/or by **code**—document in README snippet when done.
-- [ ] **created_by / updated_by**: set to **importing user** (session).
-- [ ] **Soft-delete**: imported rows **not** deleted (`deleted_at` null unless column supported later).
-- [ ] **Optional**: append-only audit log entry per batch with row count.
+- [x] **Template columns** cover core fields: e.g. `record_no` (or auto-generate if empty—**decide**), `date_received`, `date_returned`, `branch_id` or branch key column, `pc_model`, `serial_number`, `tag_number`, `maintenance_note`, `customer_name`, `phone_number`, `status_id` or status key, `delivery_method_id` or delivery key, optional custom columns → `custom_data` JSON mapping—**finalize column list** when implementing.
+- [x] **Legacy rule**: if a **required** DB field is missing/blank in CSV, set a **placeholder** (e.g. `serial_number` → `legacy-import-<rowIndex>` or `legacy-s/n-<rowIndex>`; same idea for other required strings—**must be unique** where the schema requires uniqueness, e.g. `record_no`, `serial_number` if deduped).
+- [x] **Lookup resolution**: map branch/status/delivery by **id** (preferred for stability) and/or by **code**—document in README snippet when done.
+- [x] **created_by / updated_by**: set to **importing user** (session).
+- [x] **Soft-delete**: imported rows **not** deleted (`deleted_at` null unless column supported later).
+- [x] **Optional**: append-only audit log entry per batch with row count.
+
+**Decisions (v1):** `requireManager()`. **branch_id:** branch id or **branch name** (case-insensitive). **status_id:** status id or **status code**. **delivery_method_id:** id or **delivery code**. Active lookups only. Placeholders: empty `record_no` → `generateNextRecordNo` (transaction-aware); empty `date_received` → today (UTC); empty `serial_number` → `legacy-sn-<row>-<suffix>`; empty `customer_name` → `Legacy import`; empty `phone_number` → `n/a`; empty `pc_model` → `Unknown`. Required custom fields → `"legacy-import"` in `custom_data`. **Audit:** `record_bulk_import` with `rowsImported`. See `services/import-records-csv.ts`.
 
 ---
 
