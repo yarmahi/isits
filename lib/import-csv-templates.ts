@@ -9,8 +9,9 @@ export const BRANCHES_IMPORT = {
 
 export const STATUSES_IMPORT = {
   filename: "statuses-template.csv",
-  headers: ["code", "name", "sort_order", "is_active"],
-  exampleRow: ["example_status", "Example", "10", "true"],
+  /** `id` optional — leave empty for a new id. */
+  headers: ["id", "code", "name", "sort_order", "is_active"],
+  exampleRow: ["", "example_status", "Example", "10", "true"],
 } as const;
 
 export const DELIVERY_METHODS_IMPORT = {

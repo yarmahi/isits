@@ -5,25 +5,25 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { branches } from "@/db/schema";
-import type { ImportCsvResult } from "@/lib/import-csv-types";
+import { statuses } from "@/db/schema";
 import { ImportRowError } from "@/lib/import-csv-errors";
-import { parseBool } from "@/lib/import-csv-parse";
+import { parseBool, parseSortOrder } from "@/lib/import-csv-parse";
+import type { ImportCsvResult } from "@/lib/import-csv-types";
 import { validateCsvImport } from "@/lib/import-csv-validate";
 import { parseCsvKeyedRows } from "@/lib/parse-csv";
 import { requireManager } from "@/lib/permissions";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_ROWS = 5000;
+const CODE_RE = /^[a-z0-9_]+$/;
 
 /**
- * Branches CSV import policy (Phase B):
- * - Columns: `name` (required), `is_active` (optional, default true), `id` (optional UUID).
- * - Duplicate names in the same file (case-insensitive): later rows skipped.
- * - Name already in DB (case-insensitive) and row has no `id` matching that branch: skipped.
- * - Row with `id`: update if id exists; insert with that id if new. Name must not belong to another branch.
+ * Statuses CSV import (Phase C). Unique key: `code` (DB unique).
+ * - Optional `id` (UUID): update existing or insert with that id.
+ * - Duplicate `code` in file (same normalized code): later rows skipped.
+ * - `code` already used by another status and row does not target that id: skipped.
  */
-export async function importBranchesCsvAction(
+export async function importStatusesCsvAction(
   formData: FormData,
 ): Promise<ImportCsvResult> {
   await requireManager();
@@ -47,8 +47,11 @@ export async function importBranchesCsvAction(
   if (rows.length > MAX_ROWS) {
     return { ok: false, error: `Too many rows (max ${MAX_ROWS}).` };
   }
-  if (!("name" in rows[0])) {
-    return { ok: false, error: 'CSV must include a "name" column.' };
+  if (!("code" in rows[0]) || !("name" in rows[0])) {
+    return {
+      ok: false,
+      error: 'CSV must include "code" and "name" columns.',
+    };
   }
 
   const db = getDb();
@@ -56,45 +59,52 @@ export async function importBranchesCsvAction(
   try {
     result = await db.transaction(async (tx) => {
       const existing = await tx
-        .select({ id: branches.id, name: branches.name })
-        .from(branches);
+        .select({ id: statuses.id, code: statuses.code })
+        .from(statuses);
 
       const idSet = new Set(existing.map((e) => e.id));
-      const nameLowerToId = new Map<string, string>();
+      const codeKeyToId = new Map<string, string>();
       for (const e of existing) {
-        nameLowerToId.set(e.name.trim().toLowerCase(), e.id);
+        codeKeyToId.set(e.code.trim().toLowerCase(), e.id);
       }
 
       function forgetId(id: string) {
-        for (const [k, v] of [...nameLowerToId.entries()]) {
-          if (v === id) nameLowerToId.delete(k);
+        for (const [k, v] of [...codeKeyToId.entries()]) {
+          if (v === id) codeKeyToId.delete(k);
         }
       }
 
       let inserted = 0;
       let updated = 0;
       let skipped = 0;
-      const seenNameInFile = new Set<string>();
+      const seenCodeInFile = new Set<string>();
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rowNum = i + 2;
-        const nameRaw = (row.name ?? "").trim();
-        if (!nameRaw) {
+        const codeRaw = (row.code ?? "").trim();
+        if (!codeRaw) {
           skipped++;
           continue;
+        }
+        const code = parseCodeField(codeRaw, rowNum);
+        const codeKey = code.toLowerCase();
+        if (seenCodeInFile.has(codeKey)) {
+          skipped++;
+          continue;
+        }
+
+        const nameRaw = (row.name ?? "").trim();
+        if (!nameRaw) {
+          throw new ImportRowError(`Row ${rowNum}: name is required.`);
         }
         if (nameRaw.length > 200) {
           throw new ImportRowError(
             `Row ${rowNum}: name must be 1–200 characters.`,
           );
         }
-        const nameKey = nameRaw.toLowerCase();
-        if (seenNameInFile.has(nameKey)) {
-          skipped++;
-          continue;
-        }
 
+        const sortOrder = parseSortOrder(row.sort_order, rowNum, 0);
         const boolParsed = parseBool(row.is_active, rowNum);
         if (!boolParsed.ok) throw new ImportRowError(boolParsed.error);
         const isActive = boolParsed.value;
@@ -106,7 +116,7 @@ export async function importBranchesCsvAction(
               `Row ${rowNum}: id must be a valid UUID.`,
             );
           }
-          const owner = nameLowerToId.get(nameKey);
+          const owner = codeKeyToId.get(codeKey);
           if (owner !== undefined && owner !== idRaw) {
             skipped++;
             continue;
@@ -117,40 +127,45 @@ export async function importBranchesCsvAction(
 
           if (existed) {
             await tx
-              .update(branches)
+              .update(statuses)
               .set({
+                code,
                 name: nameRaw,
+                sortOrder,
                 isActive,
-                updatedAt: new Date(),
               })
-              .where(eq(branches.id, idRaw));
+              .where(eq(statuses.id, idRaw));
             updated++;
           } else {
-            await tx.insert(branches).values({
+            await tx.insert(statuses).values({
               id: idRaw,
+              code,
               name: nameRaw,
+              sortOrder,
               isActive,
             });
             inserted++;
             idSet.add(idRaw);
           }
-          nameLowerToId.set(nameKey, idRaw);
-          seenNameInFile.add(nameKey);
+          codeKeyToId.set(codeKey, idRaw);
+          seenCodeInFile.add(codeKey);
         } else {
-          if (nameLowerToId.has(nameKey)) {
+          if (codeKeyToId.has(codeKey)) {
             skipped++;
             continue;
           }
           const newId = randomUUID();
-          await tx.insert(branches).values({
+          await tx.insert(statuses).values({
             id: newId,
+            code,
             name: nameRaw,
+            sortOrder,
             isActive,
           });
           inserted++;
           idSet.add(newId);
-          nameLowerToId.set(nameKey, newId);
-          seenNameInFile.add(nameKey);
+          codeKeyToId.set(codeKey, newId);
+          seenCodeInFile.add(codeKey);
         }
       }
 
@@ -163,7 +178,7 @@ export async function importBranchesCsvAction(
     throw e;
   }
 
-  revalidatePath("/settings/branches");
+  revalidatePath("/settings/statuses");
   revalidatePath("/records");
   revalidatePath("/records/new");
 
@@ -175,4 +190,18 @@ export async function importBranchesCsvAction(
     parts.length > 0 ? parts.join(", ") : "No rows changed (all skipped).";
 
   return { ok: true, message };
+}
+
+function parseCodeField(raw: string, rowNum: number): string {
+  if (raw.length > 80) {
+    throw new ImportRowError(
+      `Row ${rowNum}: code must be at most 80 characters.`,
+    );
+  }
+  if (!CODE_RE.test(raw)) {
+    throw new ImportRowError(
+      `Row ${rowNum}: code must use lowercase letters, numbers, and underscores only.`,
+    );
+  }
+  return raw;
 }

@@ -57,9 +57,11 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase C — Statuses CSV import
 
-- [ ] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
-- [ ] Enforce **unique `code`** (reject row or skip with error).
-- [ ] **Revalidate** `/settings/statuses` and record routes as needed.
+- [x] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
+- [x] Enforce **unique `code`** (reject row or skip with error).
+- [x] **Revalidate** `/settings/statuses` and record routes as needed.
+
+**Decisions (v1):** Same pattern as branches: optional `id` (UUID) for update or insert with fixed id. Natural key is **`code`** (unique in DB). Duplicate `code` in the file or `code` already taken by another row → **skipped**. Invalid `code` format / missing name / bad `sort_order` → **failed import** (transaction rolled back). See `services/import-statuses-csv.ts`.
 
 ---
 

@@ -39,7 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
 import { STATUSES_IMPORT } from "@/lib/import-csv-templates";
-import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
+import { importStatusesCsvFromFile } from "@/lib/statuses-import-csv-client";
 
 export const STATUSES_DEFAULT_PAGE_SIZE = 10;
 
@@ -429,7 +429,8 @@ export function StatusesSettingsClient({
         templateFilename={STATUSES_IMPORT.filename}
         headers={STATUSES_IMPORT.headers}
         exampleRow={STATUSES_IMPORT.exampleRow}
-        onImport={stubCsvImportFromFile}
+        onImport={importStatusesCsvFromFile}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );
