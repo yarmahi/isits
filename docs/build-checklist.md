@@ -6,52 +6,52 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 1 - Foundation and Project Skeleton
 
-- [ ] Create the Next.js project with TypeScript and App Router.
-- [ ] Install Tailwind CSS.
-- [ ] Install and configure shadcn/ui.
-- [ ] Set up PostgreSQL connection (local dev; production uses Neon + same `DATABASE_URL` on Vercel).
-- [ ] Install and configure Drizzle ORM.
-- [ ] Create migration workflow and first migration.
-- [ ] Create shared app layout with top navigation.
-- [ ] Create placeholder routes for Records, Activity, Users, Settings, and Profile.
-- [ ] Add environment variable management and validation.
-- [ ] Create base utility folders: `lib`, `db`, `services`, `types`, `components`.
-- [ ] Decide on route naming and folder structure early.
-- [ ] Add a simple health check / test page.
+- [x] Create the Next.js project with TypeScript and App Router.
+- [x] Install Tailwind CSS.
+- [x] Install and configure shadcn/ui.
+- [x] Set up PostgreSQL connection (local dev; production uses Neon + same `DATABASE_URL` on Vercel).
+- [x] Install and configure Drizzle ORM.
+- [x] Create migration workflow and first migration.
+- [x] Create shared app layout with top navigation.
+- [x] Create placeholder routes for Records, Activity, Users, Settings, and Profile.
+- [x] Add environment variable management and validation.
+- [x] Create base utility folders: `lib`, `db`, `services`, `types`, `components`.
+- [x] Decide on route naming and folder structure early.
+- [x] Add a simple health check / test page.
 
 ### Phase 1 Done When
 
-- [ ] The app runs locally.
-- [ ] The database is connected.
-- [ ] Migrations work.
-- [ ] The responsive shell is visible.
+- [x] The app runs locally.
+- [x] The database is connected.
+- [x] Migrations work.
+- [x] The responsive shell is visible.
 
 ---
 
 ## Phase 2 - Authentication, Roles, and User Management
 
-- [ ] Implement login page.
-- [ ] Implement logout flow.
-- [ ] Add protected routes.
-- [ ] Create users table.
-- [ ] Add role field with only `director` and `specialist`.
-- [ ] Seed the first director account.
-- [ ] Add `is_active` support for users.
-- [ ] Prevent inactive users from logging in.
-- [ ] Create server-side permission helpers.
-- [ ] Create director-only users list page.
-- [ ] Create director-only create user form.
-- [ ] Create director-only edit user form.
-- [ ] Add activate/deactivate action for specialists.
-- [ ] Hide director-only navigation items from specialists.
-- [ ] Enforce director-only access on the server, not just in the UI.
+- [x] Implement login page.
+- [x] Implement logout flow.
+- [x] Add protected routes.
+- [x] Create users table.
+- [x] Add role field with only `manager` and `specialist`.
+- [x] Seed the first manager account.
+- [x] Add `is_active` support for users.
+- [x] Prevent inactive users from logging in.
+- [x] Create server-side permission helpers.
+- [x] Create manager-only users list page.
+- [x] Create manager-only create user form.
+- [x] Create manager-only edit user form.
+- [x] Add activate/deactivate action for specialists.
+- [x] Hide manager-only navigation items from specialists.
+- [x] Enforce manager-only access on the server, not just in the UI.
 
 ### Phase 2 Done When
 
-- [ ] The director can log in.
-- [ ] The director can manage specialists.
-- [ ] Specialists can log in.
-- [ ] Specialists cannot access director-only pages.
+- [x] The manager can log in.
+- [x] The manager can manage specialists.
+- [x] Specialists can log in.
+- [x] Specialists cannot access manager-only pages.
 
 ---
 
@@ -73,7 +73,7 @@ Use this checklist while implementing the phased plan.
 - [ ] Build archive action instead of hard delete.
 - [ ] Build restore action for archived records.
 - [ ] Ensure specialists can edit only their own records.
-- [ ] Ensure director can edit any record.
+- [ ] Ensure manager can edit any record.
 - [ ] Ensure all record writes go through service functions.
 - [ ] Add server-side validation for all record payloads.
 
@@ -82,8 +82,8 @@ Use this checklist while implementing the phased plan.
 - [ ] A specialist can create a record.
 - [ ] A specialist can edit their own record.
 - [ ] A specialist cannot edit another specialist's record.
-- [ ] A director can edit any record.
-- [ ] A director can archive and restore records.
+- [ ] A manager can edit any record.
+- [ ] A manager can archive and restore records.
 
 ---
 
@@ -146,12 +146,12 @@ Use this checklist while implementing the phased plan.
 - [ ] Parse and store device type.
 - [ ] Store before/after JSON snapshots for updates.
 - [ ] Exclude secrets and sensitive values from logs.
-- [ ] Build director-only activity log page.
+- [ ] Build manager-only activity log page.
 - [ ] Add activity log filters for date, event type, actor, entity type, entity id, and IP.
 
 ### Phase 5 Done When
 
-- [ ] The director can inspect the audit trail.
+- [ ] The manager can inspect the audit trail.
 - [ ] All major actions appear in the log.
 - [ ] Log entries include request metadata.
 - [ ] No secret data is stored in the logs.
@@ -161,7 +161,7 @@ Use this checklist while implementing the phased plan.
 ## Phase 6 - Field Configuration and Extensibility
 
 - [ ] Create `field_definitions` table.
-- [ ] Build director-only field settings page.
+- [ ] Build manager-only field settings page.
 - [ ] Add support for active/inactive fields.
 - [ ] Add support for required fields.
 - [ ] Add support for searchable fields.
@@ -178,8 +178,8 @@ Use this checklist while implementing the phased plan.
 
 ### Phase 6 Done When
 
-- [ ] The director can add a custom field without code changes.
-- [ ] The director can hide an optional field.
+- [ ] The manager can add a custom field without code changes.
+- [ ] The manager can hide an optional field.
 - [ ] The record pages still work correctly with the configured fields.
 
 ---
@@ -219,7 +219,7 @@ Use this checklist while implementing the phased plan.
 - [ ] Add end-to-end record filtering test.
 - [ ] Add end-to-end activity log visibility test.
 - [ ] Prepare production environment variables.
-- [ ] Create seed script for director, statuses, branches, and delivery methods.
+- [ ] Create seed script for manager, statuses, branches, and delivery methods.
 - [ ] Write local setup instructions.
 - [ ] Write deployment instructions.
 - [ ] Write backup/migration notes.
@@ -241,10 +241,9 @@ Use this checklist while implementing the phased plan.
 - [ ] The app is mobile oriented and responsive.
 - [ ] Specialists can create records and edit only their own records.
 - [ ] Specialists can view all records.
-- [ ] The director can oversee all records and manage all users.
+- [ ] The manager can oversee all records and manage all users.
 - [ ] The activity log captures CRUD, login/logout, and page views.
 - [ ] The activity log stores rich metadata such as IP and browser context.
 - [ ] The records list supports strong search and filtering.
 - [ ] The design supports field extension without a major rewrite.
 - [ ] The project remains simple and focused.
-

@@ -74,9 +74,9 @@ Secure the application and make users manageable.
 - implement login and logout
 - implement role-based route protection
 - create the users table and role model
-- seed one director account
-- build director-only user management pages
-- allow the director to create, edit, activate, and deactivate specialist accounts
+- seed one manager account
+- build manager-only user management pages
+- allow the manager to create, edit, activate, and deactivate specialist accounts
 - build shared permission helpers
 
 ### Important Rules
@@ -84,7 +84,7 @@ Secure the application and make users manageable.
 - no public registration
 - server-side authorization is mandatory
 - disabled users must not log in
-- users must be assigned one of two roles only: `director` or `specialist`
+- users must be assigned one of two roles only: `manager` or `specialist`
 
 ### Deliverables
 
@@ -92,13 +92,13 @@ Secure the application and make users manageable.
 - logout flow
 - session handling
 - role guards / access helpers
-- users list page (director only)
-- create/edit user forms (director only)
+- users list page (manager only)
+- create/edit user forms (manager only)
 
 ### Exit Criteria
 
-- director can log in and manage specialist accounts
-- specialist can log in but cannot access director-only pages
+- manager can log in and manage specialist accounts
+- specialist can log in but cannot access manager-only pages
 - protected routes work correctly
 
 ---
@@ -125,8 +125,8 @@ Make the main workflow usable end to end.
 
 - specialists can create records
 - specialists can edit only their own records
-- director can edit any record
-- director can archive and restore records
+- manager can edit any record
+- manager can archive and restore records
 - record writes must use service functions, not direct UI database calls
 
 ### Deliverables
@@ -142,7 +142,7 @@ Make the main workflow usable end to end.
 
 - the app is already useful for real intake and update work
 - specialists can create and maintain their own records
-- director can review and manage any record
+- manager can review and manage any record
 
 ---
 
@@ -224,7 +224,7 @@ Make the system fully accountable and traceable.
 - log create, update, activate, and deactivate actions for users
 - store before/after snapshots for updates
 - capture request metadata such as IP, browser, operating system, and device type
-- create the director-only activity log page with filters
+- create the manager-only activity log page with filters
 
 ### Event Categories
 
@@ -250,14 +250,14 @@ Make the system fully accountable and traceable.
 ### Deliverables
 
 - working audit logger
-- filtered activity log page for the director
+- filtered activity log page for the manager
 - request metadata capture
 - before/after diff storage for update events
 
 ### Exit Criteria
 
 - all major user actions are traceable
-- the director can inspect who did what, when, where, and from which client context
+- the manager can inspect who did what, when, where, and from which client context
 - this phase is fully valuable even if field configuration does not exist yet
 
 ---
@@ -271,7 +271,7 @@ Allow the system to evolve beyond the original Excel columns without redesigning
 ### Scope
 
 - create the `field_definitions` table
-- expose director-only field settings UI
+- expose manager-only field settings UI
 - support activating/deactivating fields in the form and detail page
 - support adding new custom fields stored in `records.custom_data`
 - support ordering fields in the UI
@@ -294,8 +294,8 @@ Allow the system to evolve beyond the original Excel columns without redesigning
 
 ### Exit Criteria
 
-- the director can add a new custom field without code changes
-- the director can hide an optional field from the form/UI
+- the manager can add a new custom field without code changes
+- the manager can hide an optional field from the form/UI
 - the core record workflow still works without depending on any later phase
 
 ---
@@ -314,7 +314,7 @@ Make the application polished, reliable, and pleasant to use.
 - add confirmation dialogs for risky actions
 - improve accessibility labels and keyboard support
 - add duplicate detection warnings where useful
-- ensure director-only pages are clearly separated
+- ensure manager-only pages are clearly separated
 - improve consistency of record cards, tables, and details views
 
 ### Deliverables
@@ -343,7 +343,7 @@ Prepare the project for real-world use.
 - add tests for permissions, records logic, and audit logging
 - add end-to-end tests for login, create record, update record, filtering, and activity log visibility
 - prepare production environment configuration
-- create seed data for initial branches, statuses, and director account
+- create seed data for initial branches, statuses, and manager account
 - add backup and migration notes
 - write a concise developer README for future maintenance
 - document how to run the app locally and how to deploy it
@@ -351,7 +351,7 @@ Prepare the project for real-world use.
 ### Minimum Test Coverage Targets
 
 - permissions: specialists cannot edit others' records
-- director-only routes are protected
+- manager-only routes are protected
 - record create/update/archive actions log correctly
 - activity log entries are written with metadata
 - filters return expected results
