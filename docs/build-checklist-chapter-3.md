@@ -1,0 +1,119 @@
+# Chapter 3 — Build Checklist (CSV bulk import)
+
+This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tables (branches, statuses, delivery methods) and for **records** (legacy migration path). It complements [`build-checklist.md`](build-checklist.md) and [`build-checklist-chapter-2.md`](build-checklist-chapter-2.md).
+
+---
+
+## Scope
+
+- **List pages** gain an **Import** control (button + icon) that opens a **modal** (or equivalent dialog).
+- Inside the modal: **download a sample CSV template**, **upload a populated CSV**, **validate**, then **bulk insert** (server-side).
+- **Lookups** (branches, statuses, delivery methods): columns align with existing schema and validation rules (unique codes where applicable, etc.).
+- **Records import** is explicitly **legacy**: not every column is required in the CSV. Where the app would normally require a value but the cell is empty, apply a **deterministic placeholder** (e.g. serial number → `legacy-import-<row>` or `legacy-s/n` pattern—pick one convention and document it in code comments). Resolve foreign keys (branch, status, delivery method) by **stable id** or by **code/name** as specified per phase—document the chosen mapping in this checklist when implemented.
+
+### Chapter 3 done when
+
+- [ ] Managers can import CSVs for **branches**, **statuses**, and **delivery methods** from the respective Settings list pages with template download + upload + bulk insert.
+- [ ] Authorized users can import **records** from the **Records** list page with template download + upload + bulk insert, using the legacy placeholder rules for missing required fields.
+- [ ] Failed rows are reported clearly (row numbers, reasons); successful rows commit in a predictable way (see Phase F).
+
+---
+
+## Cross-cutting UX and behavior
+
+- [ ] **Import** button with icon on each target list page (branches, statuses, delivery methods, records).
+- [ ] **Modal** (Dialog): short title; optional one-line description kept concise per project copy style.
+- [ ] **Download sample CSV** (static template or route handler that returns `text/csv` with header row + example row(s)).
+- [ ] **File input** for `.csv` (and reject non-CSV with a clear message).
+- [ ] **Parsing**: robust handling of UTF-8, quoted fields, commas in values (use a vetted CSV parser or well-tested split rules—document choice).
+- [ ] **Validation**: row-level errors; block or partial-apply policy chosen in Phase F.
+- [ ] **Permissions**:
+  - [ ] **Settings lookups**: **manager-only** (same as existing settings routes).
+  - [ ] **Records**: match existing product rules (e.g. specialists create/import own scope vs manager org-wide—**decide and implement**; default suggestion: **manager-only** for first version to reduce abuse, unless product requires specialists to import legacy rows).
+- [ ] **Audit**: optional `writeAuditLog` events for bulk import (event type to define, e.g. `record_bulk_import`)—note in implementation notes when closed.
+- [ ] **Performance**: cap file size / max rows per request; document limits in UI or docs.
+
+---
+
+## Phase A — Shared import UI primitives
+
+- [ ] Reusable **Import dialog** shell (props: title, template download handler, upload submit, children for format hints).
+- [ ] **Download template** helper (shared across pages or small wrappers per entity).
+- [ ] **Client → server** submission via **Server Action** or **Route Handler** (`multipart/form-data` or text upload); prefer one pattern for all four importers.
+- [ ] **Error / success** feedback (toast or inline summary) consistent with existing app patterns.
+
+---
+
+## Phase B — Branches CSV import
+
+- [ ] **Template columns** (suggested): `name`, `is_active` (optional, default true); `id` optional if importing fixed ids—if omitted, generate UUIDs server-side.
+- [ ] **Server action** (or service): parse CSV → validate → `insert` / `on conflict` policy (insert-only vs upsert by id—**decide**).
+- [ ] **Revalidate** `/settings/branches`, `/records`, `/records/new` after success.
+- [ ] **Empty / duplicate** handling documented (skip duplicates by name?—**decide**).
+
+---
+
+## Phase C — Statuses CSV import
+
+- [ ] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
+- [ ] Enforce **unique `code`** (reject row or skip with error).
+- [ ] **Revalidate** `/settings/statuses` and record routes as needed.
+
+---
+
+## Phase D — Delivery methods CSV import
+
+- [ ] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
+- [ ] Enforce **unique `code`**.
+- [ ] **Revalidate** `/settings/delivery-methods` and record routes as needed.
+
+---
+
+## Phase E — Records CSV import (legacy)
+
+- [ ] **Template columns** cover core fields: e.g. `record_no` (or auto-generate if empty—**decide**), `date_received`, `date_returned`, `branch_id` or branch key column, `pc_model`, `serial_number`, `tag_number`, `maintenance_note`, `customer_name`, `phone_number`, `status_id` or status key, `delivery_method_id` or delivery key, optional custom columns → `custom_data` JSON mapping—**finalize column list** when implementing.
+- [ ] **Legacy rule**: if a **required** DB field is missing/blank in CSV, set a **placeholder** (e.g. `serial_number` → `legacy-import-<rowIndex>` or `legacy-s/n-<rowIndex>`; same idea for other required strings—**must be unique** where the schema requires uniqueness, e.g. `record_no`, `serial_number` if deduped).
+- [ ] **Lookup resolution**: map branch/status/delivery by **id** (preferred for stability) and/or by **code**—document in README snippet when done.
+- [ ] **created_by / updated_by**: set to **importing user** (session).
+- [ ] **Soft-delete**: imported rows **not** deleted (`deleted_at` null unless column supported later).
+- [ ] **Optional**: append-only audit log entry per batch with row count.
+
+---
+
+## Phase F — Transactions, partial success, and reporting
+
+- [ ] **Strategy**: all-or-nothing transaction vs **per-row** with summary (success count, failure count, downloadable error CSV)—**pick one** for v1 (recommend: **per-row** with summary for large legacy files).
+- [ ] **Idempotency** (optional): detect duplicate `record_no` / serial and skip or fail row—**decide**.
+
+---
+
+## Phase G — QA and handover
+
+- [ ] Unit tests for CSV parsing edge cases (quotes, newlines in fields).
+- [ ] Manual smoke: download template → fill minimal rows → import → verify DB rows and list UI.
+- [ ] Document **max rows** and **file size** limits in [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) or `README` if relevant.
+
+---
+
+## Implementation notes (for developers)
+
+- **CSV library**: Prefer a small, maintained parser (e.g. `papaparse` or `csv-parse`) over hand-rolled split—add dependency deliberately.
+- **Security**: never execute CSV as code; validate types and length; scan for absurdly large payloads.
+- **Neon / serverless**: batch inserts in chunks to avoid statement timeouts on huge files.
+- **Placeholder strings** for legacy imports must remain **unique** where the schema requires uniqueness (`record_no`, `serial_number` uniqueness rules—check `services/records` and migrations).
+
+---
+
+## Reference diagram
+
+```mermaid
+flowchart TD
+  subgraph ui [List page]
+    Btn[Import button]
+    Modal[Modal: template + upload]
+  end
+  Btn --> Modal
+  Modal --> Parse[Parse CSV]
+  Parse --> Validate[Validate rows]
+  Validate --> Insert[Bulk insert]
+```

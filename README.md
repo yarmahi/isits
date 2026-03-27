@@ -69,6 +69,8 @@ Next.js app for intake records, user management, and manager activity audit.
 | [docs/BACKUP-MIGRATIONS.md](docs/BACKUP-MIGRATIONS.md) | Backups and migrations |
 | [docs/MAINTENANCE.md](docs/MAINTENANCE.md) | Ongoing maintenance |
 | [docs/build-checklist.md](docs/build-checklist.md) | Phased delivery checklist |
+| [docs/build-checklist-chapter-2.md](docs/build-checklist-chapter-2.md) | Chapter 2 — Settings shell, lookups, record detail timeline |
+| [docs/build-checklist-chapter-3.md](docs/build-checklist-chapter-3.md) | Chapter 3 — CSV bulk import (lookups + records) |
 
 ## Testing
 
