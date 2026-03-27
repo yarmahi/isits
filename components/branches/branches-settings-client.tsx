@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Building2, FileUp, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createBranchAction,
   deleteBranchAction,
@@ -37,6 +37,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
+import { BRANCHES_IMPORT } from "@/lib/import-csv-templates";
+import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
 
 export const BRANCHES_DEFAULT_PAGE_SIZE = 10;
 
@@ -85,6 +88,7 @@ export function BranchesSettingsClient({
   const [name, setName] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [pending, setPending] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (!dialog) return;
@@ -180,14 +184,25 @@ export function BranchesSettingsClient({
           <h2 className="text-lg font-semibold tracking-tight">Branches</h2>
           <p className="text-sm text-muted-foreground">Manage branches</p>
         </div>
-        <Button
-          type="button"
-          className="shrink-0 gap-2"
-          onClick={() => setDialog({ mode: "create" })}
-        >
-          <Plus className="size-4" aria-hidden />
-          Add branch
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => setImportOpen(true)}
+          >
+            <FileUp className="size-4" aria-hidden />
+            Import
+          </Button>
+          <Button
+            type="button"
+            className="gap-2"
+            onClick={() => setDialog({ mode: "create" })}
+          >
+            <Plus className="size-4" aria-hidden />
+            Add branch
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
@@ -368,6 +383,17 @@ export function BranchesSettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportCsvDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title="Import branches"
+        description="Download the sample CSV, then upload a filled file."
+        templateFilename={BRANCHES_IMPORT.filename}
+        headers={BRANCHES_IMPORT.headers}
+        exampleRow={BRANCHES_IMPORT.exampleRow}
+        onImport={stubCsvImportFromFile}
+      />
     </div>
   );
 }

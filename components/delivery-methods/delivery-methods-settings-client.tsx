@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2, Truck } from "lucide-react";
+import { FileUp, Pencil, Plus, Trash2, Truck } from "lucide-react";
 import {
   createDeliveryMethodAction,
   deleteDeliveryMethodAction,
@@ -37,6 +37,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
+import { DELIVERY_METHODS_IMPORT } from "@/lib/import-csv-templates";
+import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
 
 export const DELIVERY_METHODS_DEFAULT_PAGE_SIZE = 10;
 
@@ -87,6 +90,7 @@ export function DeliveryMethodsSettingsClient({
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [pending, setPending] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (!dialog) return;
@@ -202,14 +206,25 @@ export function DeliveryMethodsSettingsClient({
             Manage delivery methods
           </p>
         </div>
-        <Button
-          type="button"
-          className="shrink-0 gap-2"
-          onClick={() => setDialog({ mode: "create" })}
-        >
-          <Plus className="size-4" aria-hidden />
-          Add method
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => setImportOpen(true)}
+          >
+            <FileUp className="size-4" aria-hidden />
+            Import
+          </Button>
+          <Button
+            type="button"
+            className="gap-2"
+            onClick={() => setDialog({ mode: "create" })}
+          >
+            <Plus className="size-4" aria-hidden />
+            Add method
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
@@ -431,6 +446,17 @@ export function DeliveryMethodsSettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportCsvDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title="Import delivery methods"
+        description="Download the sample CSV, then upload a filled file."
+        templateFilename={DELIVERY_METHODS_IMPORT.filename}
+        headers={DELIVERY_METHODS_IMPORT.headers}
+        exampleRow={DELIVERY_METHODS_IMPORT.exampleRow}
+        onImport={stubCsvImportFromFile}
+      />
     </div>
   );
 }

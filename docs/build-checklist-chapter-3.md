@@ -21,10 +21,10 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Cross-cutting UX and behavior
 
-- [ ] **Import** button with icon on each target list page (branches, statuses, delivery methods, records).
-- [ ] **Modal** (Dialog): short title; optional one-line description kept concise per project copy style.
-- [ ] **Download sample CSV** (static template or route handler that returns `text/csv` with header row + example row(s)).
-- [ ] **File input** for `.csv` (and reject non-CSV with a clear message).
+- [x] **Import** button with icon on each target list page (branches, statuses, delivery methods, records).
+- [x] **Modal** (Dialog): short title; optional one-line description kept concise per project copy style.
+- [x] **Download sample CSV** (static template or route handler that returns `text/csv` with header row + example row(s)).
+- [x] **File input** for `.csv` (and reject non-CSV with a clear message).
 - [ ] **Parsing**: robust handling of UTF-8, quoted fields, commas in values (use a vetted CSV parser or well-tested split rules—document choice).
 - [ ] **Validation**: row-level errors; block or partial-apply policy chosen in Phase F.
 - [ ] **Permissions**:
@@ -37,10 +37,10 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase A — Shared import UI primitives
 
-- [ ] Reusable **Import dialog** shell (props: title, template download handler, upload submit, children for format hints).
-- [ ] **Download template** helper (shared across pages or small wrappers per entity).
-- [ ] **Client → server** submission via **Server Action** or **Route Handler** (`multipart/form-data` or text upload); prefer one pattern for all four importers.
-- [ ] **Error / success** feedback (toast or inline summary) consistent with existing app patterns.
+- [x] Reusable **Import dialog** shell (props: title, template download handler, upload submit, children for format hints).
+- [x] **Download template** helper (shared across pages or small wrappers per entity).
+- [x] **Client → server** submission via **Server Action** or **Route Handler** (`multipart/form-data` or text upload); prefer one pattern for all four importers.
+- [x] **Error / success** feedback (toast or inline summary) consistent with existing app patterns.
 
 ---
 

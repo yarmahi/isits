@@ -24,6 +24,7 @@ import {
   recordsListOrderBy,
 } from "@/lib/records-list";
 import { RecordsCreatedToast } from "@/components/records/records-created-toast";
+import { RecordsCsvImportButton } from "@/components/records/records-csv-import-button";
 import { RecordsListFilters } from "@/components/records/records-list-filters";
 import { RecordRowActions } from "@/components/records/record-row-actions";
 import { RecordStatusBadge } from "@/components/records/record-status-badge";
@@ -97,13 +98,16 @@ export default async function RecordsListPage({
           <h1 className="text-2xl font-semibold tracking-tight">Records</h1>
           <p className="text-sm text-muted-foreground">Manage records</p>
         </div>
-        <Link
-          href="/records/new"
-          className={cn(buttonVariants({ variant: "default" }), "gap-2")}
-        >
-          <Plus className="size-4" aria-hidden />
-          New record
-        </Link>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <RecordsCsvImportButton />
+          <Link
+            href="/records/new"
+            className={cn(buttonVariants({ variant: "default" }), "gap-2")}
+          >
+            <Plus className="size-4" aria-hidden />
+            New record
+          </Link>
+        </div>
       </div>
 
       <RecordsListFilters
