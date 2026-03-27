@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md border-border/80 shadow-lg">
+    <Card className="w-full max-w-md border-border/80 shadow-lg ring-1 ring-black/5 dark:ring-white/10">
       <CardHeader className="space-y-4 text-center">
         <div className="flex justify-center">
           <AppLogo size="md" />
@@ -92,7 +93,8 @@ export function LoginForm() {
               </FieldDescription>
             )}
             <Field>
-              <Button type="submit" className="w-full" disabled={pending}>
+              <Button type="submit" className="w-full gap-2" disabled={pending}>
+                <LogIn className="size-4 opacity-80" aria-hidden />
                 {pending ? "Signing in…" : "Sign in"}
               </Button>
             </Field>

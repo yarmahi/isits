@@ -1,11 +1,75 @@
-import Link from "next/link";
-import { desc } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNotNull, or } from "drizzle-orm";
 import { getDb } from "@/db";
 import { user } from "@/db/schema";
+import { UsersManager } from "@/components/users/users-manager";
 
-/** Lists all users for manager oversight. */
-export default async function UsersListPage() {
+const DEFAULT_PAGE_SIZE = 10;
+
+function parseSearchParams(sp: Record<string, string | string[] | undefined>) {
+  const get = (k: string) => {
+    const v = sp[k];
+    return typeof v === "string" ? v : Array.isArray(v) ? v[0] : undefined;
+  };
+  const pageRaw = parseInt(get("page") ?? "1", 10) || 1;
+  const pageSizeRaw =
+    parseInt(get("pageSize") ?? String(DEFAULT_PAGE_SIZE), 10) ||
+    DEFAULT_PAGE_SIZE;
+  const pageSize = Math.min(50, Math.max(5, pageSizeRaw));
+  const q = (get("q") ?? "").trim();
+  const roleRaw = get("role") ?? "all";
+  const roleFilter: "all" | "manager" | "specialist" =
+    roleRaw === "manager" || roleRaw === "specialist" ? roleRaw : "all";
+  const statusRaw = get("status") ?? "all";
+  const statusFilter: "all" | "active" | "inactive" =
+    statusRaw === "active" || statusRaw === "inactive" ? statusRaw : "all";
+
+  return { pageRaw, pageSize, q, roleFilter, statusFilter };
+}
+
+/** Lists users with server-side filters and pagination. */
+export default async function UsersListPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const { pageRaw, pageSize, q, roleFilter, statusFilter } = parseSearchParams(
+    sp,
+  );
+
   const db = getDb();
+  const conditions = [];
+
+  if (q) {
+    const p = `%${q}%`;
+    conditions.push(
+      or(
+        ilike(user.name, p),
+        ilike(user.email, p),
+        and(isNotNull(user.username), ilike(user.username, p)),
+      ),
+    );
+  }
+  if (roleFilter !== "all") {
+    conditions.push(eq(user.role, roleFilter));
+  }
+  if (statusFilter === "active") {
+    conditions.push(eq(user.isActive, true));
+  } else if (statusFilter === "inactive") {
+    conditions.push(eq(user.isActive, false));
+  }
+
+  const whereClause = conditions.length ? and(...conditions) : undefined;
+
+  const [countRow] = await db
+    .select({ total: count() })
+    .from(user)
+    .where(whereClause);
+
+  const total = Number(countRow?.total ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+  const page = Math.min(Math.max(1, pageRaw), totalPages);
+
   const rows = await db
     .select({
       id: user.id,
@@ -17,82 +81,25 @@ export default async function UsersListPage() {
       createdAt: user.createdAt,
     })
     .from(user)
-    .orderBy(desc(user.createdAt));
+    .where(whereClause)
+    .orderBy(desc(user.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const users = rows.map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+  }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage IT specialist accounts. New accounts are created here — there
-            is no public registration.
-          </p>
-        </div>
-        <Link
-          href="/users/new"
-          className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Add specialist
-        </Link>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border bg-muted/40">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Username</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-muted-foreground"
-                >
-                  No users yet. Seed a manager or add a specialist.
-                </td>
-              </tr>
-            ) : (
-              rows.map((u) => (
-                <tr
-                  key={u.id}
-                  className="border-b border-border/60 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium">{u.name}</td>
-                  <td className="px-4 py-3 font-mono text-muted-foreground">
-                    {u.username ?? u.email.split("@")[0]}
-                  </td>
-                  <td className="px-4 py-3 capitalize">{u.role}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        u.isActive
-                          ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200"
-                          : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                      }
-                    >
-                      {u.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/users/${u.id}/edit`}
-                      className="inline-flex rounded-md px-2 py-1 text-sm font-medium text-primary hover:underline"
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <UsersManager
+      users={users}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      q={q}
+      roleFilter={roleFilter}
+      statusFilter={statusFilter}
+    />
   );
 }

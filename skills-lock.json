@@ -22,9 +22,14 @@
       "computedHash": "d7d040ee506a300c08a64b9ef6de9aa677b6d7251e33c3c87e0608f821a9506d"
     },
     "shadcn": {
-      "source": "shadcn/ui",
+      "source": "vercel/vercel-plugin",
       "sourceType": "github",
-      "computedHash": "77faba608ea949351d1757e29e6cb726f6ec5937f7595be0593038a7d2d76bb9"
+      "computedHash": "c7b2f8e5f49a48042edd4a00ff8e9d6fc37dea9437d0230da64542f0c9226fb0"
+    },
+    "shadcn-ui": {
+      "source": "google-labs-code/stitch-skills",
+      "sourceType": "github",
+      "computedHash": "119a14a004bd30fa99d386df599bd0db8d057cca146f7ee08349daed48b2ea55"
     }
   }
 }

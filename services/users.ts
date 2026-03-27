@@ -147,6 +147,38 @@ export async function updateUserAction(input: unknown) {
       );
   }
   revalidatePath("/users");
-  revalidatePath(`/users/${parsed.userId}/edit`);
+  return { ok: true as const };
+}
+
+const setUserActiveSchema = z.object({
+  userId: z.string().min(1),
+  isActive: z.boolean(),
+});
+
+/** Sets account active flag (e.g. deactivate specialist from the list). */
+export async function setUserActiveAction(input: unknown) {
+  const session = await requireManager();
+  const parsed = setUserActiveSchema.parse(input);
+  const db = getDb();
+  const [existing] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, parsed.userId))
+    .limit(1);
+  if (!existing) {
+    return { ok: false as const, error: "User not found." };
+  }
+  if (existing.role === "manager" && parsed.isActive === false) {
+    return { ok: false as const, error: "Cannot deactivate a manager account." };
+  }
+  const sessionUserId = (session.user as { id: string }).id;
+  if (existing.id === sessionUserId && parsed.isActive === false) {
+    return { ok: false as const, error: "You cannot deactivate your own account." };
+  }
+  await db
+    .update(user)
+    .set({ isActive: parsed.isActive, updatedAt: new Date() })
+    .where(eq(user.id, parsed.userId));
+  revalidatePath("/users");
   return { ok: true as const };
 }
