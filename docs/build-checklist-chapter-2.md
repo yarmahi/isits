@@ -22,16 +22,16 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase A — Settings layout and navigation
 
-- [ ] Add a shared **`layout.tsx`** under `app/(app)/(manager)/settings/` wrapping all settings sub-routes.
-- [ ] Implement a **left navigation rail** (floating / elevated panel: border, shadow, rounded corners) with links to:
-  - [ ] Branches
-  - [ ] Statuses
-  - [ ] Delivery methods
-  - [ ] Record fields
-- [ ] Highlight **active** nav item from current pathname.
-- [ ] Replace or slim **`settings/page.tsx`**: redirect to a default section (e.g. branches) or a minimal hub that matches the new shell.
-- [ ] Define stable routes (e.g. `/settings/branches`, `/settings/statuses`, `/settings/delivery-methods`, `/settings/fields`); keep **`/settings/fields`** working or add redirects for old URLs.
-- [ ] Responsive behavior: sidebar collapses or stacks appropriately on small screens.
+- [x] Add a shared **`layout.tsx`** under `app/(app)/(manager)/settings/` wrapping all settings sub-routes.
+- [x] Implement a **left navigation rail** (floating / elevated panel: border, shadow, rounded corners) with links to:
+  - [x] Branches
+  - [x] Statuses
+  - [x] Delivery methods
+  - [x] Record fields
+- [x] Highlight **active** nav item from current pathname.
+- [x] Replace or slim **`settings/page.tsx`**: redirect to a default section (e.g. branches) or a minimal hub that matches the new shell.
+- [x] Define stable routes (e.g. `/settings/branches`, `/settings/statuses`, `/settings/delivery-methods`, `/settings/fields`); keep **`/settings/fields`** working or add redirects for old URLs.
+- [x] Responsive behavior: sidebar collapses or stacks appropriately on small screens.
 
 ---
 
