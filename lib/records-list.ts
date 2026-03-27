@@ -9,6 +9,7 @@ import {
   isNull,
   lte,
   or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { records } from "@/db/schema";
@@ -186,6 +187,7 @@ export function buildRecordsListWhere(
         ilike(records.serialNumber, pattern),
         ilike(records.tagNumber, pattern),
         ilike(records.pcModel, pattern),
+        sql`${records.customData}::text ILIKE ${pattern}`,
       )!,
     );
   }

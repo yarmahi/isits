@@ -235,6 +235,38 @@ export const recordsRelations = relations(records, ({ one }) => ({
   }),
 }));
 
+/** Configurable custom fields + optional system field visibility (Phase 6). */
+export const fieldDefinitions = pgTable(
+  "field_definitions",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull().unique(),
+    label: text("label").notNull(),
+    fieldType: text("field_type").notNull(),
+    isCustom: boolean("is_custom").default(true).notNull(),
+    /** When set, this row controls a built-in `records` column (hide/show), not `custom_data`. */
+    systemColumn: text("system_column"),
+    isActive: boolean("is_active").default(true).notNull(),
+    isRequired: boolean("is_required").default(false).notNull(),
+    searchable: boolean("searchable").default(false).notNull(),
+    filterable: boolean("filterable").default(false).notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    selectOptions: jsonb("select_options")
+      .$type<{ value: string; label: string }[]>()
+      .default([])
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("field_definitions_sort_idx").on(table.sortOrder),
+    index("field_definitions_custom_idx").on(table.isCustom),
+  ],
+);
+
 /** Audit trail (Phase 5): append-only activity log for managers. */
 export const activityLogs = pgTable(
   "activity_logs",

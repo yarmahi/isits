@@ -11,6 +11,7 @@ import {
   statuses,
   user as userTable,
 } from "@/db/schema";
+import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { requireAuth } from "@/lib/permissions";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,12 @@ function fmtDate(v: string | Date | null | undefined) {
   if (v == null) return "—";
   if (typeof v === "string") return v;
   return v.toISOString().slice(0, 10);
+}
+
+function fmtCustomVal(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
 }
 
 /** Record detail with metadata (Phase 3). */
@@ -61,7 +68,9 @@ export default async function RecordDetailPage({
     redirect("/records");
   }
 
+  const fieldCfg = await loadRecordFieldConfig();
   const r = row.record;
+  const customData = (r.customData as Record<string, unknown> | null) ?? {};
   const archived = r.deletedAt != null;
   const canEdit =
     isManager || (!archived && r.createdBy === userId);
@@ -108,10 +117,12 @@ export default async function RecordDetailPage({
             <dt className="text-muted-foreground">Date received</dt>
             <dd className="font-medium">{fmtDate(r.dateReceived)}</dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Date returned</dt>
-            <dd className="font-medium">{fmtDate(r.dateReturned)}</dd>
-          </div>
+          {fieldCfg.systemVisibility.dateReturned && (
+            <div>
+              <dt className="text-muted-foreground">Date returned</dt>
+              <dd className="font-medium">{fmtDate(r.dateReturned)}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-muted-foreground">Branch</dt>
             <dd className="font-medium">{row.branchName}</dd>
@@ -134,22 +145,44 @@ export default async function RecordDetailPage({
             <dt className="text-muted-foreground">Serial number</dt>
             <dd className="font-mono text-xs">{r.serialNumber}</dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Tag number</dt>
-            <dd className="font-mono text-xs">{r.tagNumber ?? "—"}</dd>
-          </div>
+          {fieldCfg.systemVisibility.tagNumber && (
+            <div>
+              <dt className="text-muted-foreground">Tag number</dt>
+              <dd className="font-mono text-xs">{r.tagNumber ?? "—"}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-muted-foreground">Phone</dt>
             <dd>{r.phoneNumber}</dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Maintenance note</dt>
-            <dd className="whitespace-pre-wrap text-muted-foreground">
-              {r.maintenanceNote ?? "—"}
-            </dd>
-          </div>
+          {fieldCfg.systemVisibility.maintenanceNote && (
+            <div>
+              <dt className="text-muted-foreground">Maintenance note</dt>
+              <dd className="whitespace-pre-wrap text-muted-foreground">
+                {r.maintenanceNote ?? "—"}
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
+
+      {fieldCfg.customFields.length > 0 && (
+        <div className="rounded-xl border border-border/80 bg-card p-6 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold tracking-tight">
+            Additional fields
+          </h2>
+          <dl className="grid gap-4 text-sm sm:grid-cols-2">
+            {fieldCfg.customFields.map((f) => (
+              <div key={f.id}>
+                <dt className="text-muted-foreground">{f.label}</dt>
+                <dd className="mt-0.5 font-medium whitespace-pre-wrap">
+                  {fmtCustomVal(customData[f.key])}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border/80 bg-muted/30 p-4 text-sm">
         <h2 className="mb-2 font-medium">Activity</h2>

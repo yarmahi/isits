@@ -25,8 +25,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -48,6 +46,16 @@ const managerNav: NavItem[] = [
 ];
 
 type Theme = "light" | "dark" | "system";
+
+const THEME_OPTIONS: {
+  value: Theme;
+  icon: typeof Sun;
+  label: string;
+}[] = [
+  { value: "light", icon: Sun, label: "Light theme" },
+  { value: "dark", icon: Moon, label: "Dark theme" },
+  { value: "system", icon: Monitor, label: "Match system appearance" },
+];
 
 function useThemePreference() {
   const [theme, setTheme] = useState<Theme>("system");
@@ -233,25 +241,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuLabel>Theme</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                      value={theme}
-                      onValueChange={(v) =>
-                        setTheme(v as Theme)
-                      }
+                    <div
+                      className="grid grid-cols-3 gap-1 px-1 pb-1"
+                      role="group"
+                      aria-label="Color theme"
                     >
-                      <DropdownMenuRadioItem value="light">
-                        <Sun className="size-4 opacity-70" />
-                        Light
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="dark">
-                        <Moon className="size-4 opacity-70" />
-                        Dark
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="system">
-                        <Monitor className="size-4 opacity-70" />
-                        System
-                      </DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
+                      {THEME_OPTIONS.map(({ value, icon: Icon, label }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-label={label}
+                          aria-pressed={theme === value}
+                          onClick={() => setTheme(value)}
+                          className={cn(
+                            "flex h-9 items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                            theme === value &&
+                              "bg-accent text-foreground shadow-sm",
+                          )}
+                        >
+                          <Icon className="size-4" aria-hidden />
+                        </button>
+                      ))}
+                    </div>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

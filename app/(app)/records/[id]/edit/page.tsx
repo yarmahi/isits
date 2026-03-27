@@ -4,6 +4,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import { getDb } from "@/db";
 import { records } from "@/db/schema";
+import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { requireAuth } from "@/lib/permissions";
 import { fetchRecordLookups } from "@/services/records";
 import { RecordForm } from "@/components/records/record-form";
@@ -39,7 +40,10 @@ export default async function EditRecordPage({
     redirect("/records");
   }
 
-  const lookups = await fetchRecordLookups();
+  const [lookups, fieldCfg] = await Promise.all([
+    fetchRecordLookups(),
+    loadRecordFieldConfig(),
+  ]);
 
   const initial = {
     recordId: row.id,
@@ -77,7 +81,16 @@ export default async function EditRecordPage({
           Update fields as work progresses.
         </p>
       </div>
-      <RecordForm mode="edit" lookups={lookups} initial={initial} />
+      <RecordForm
+        mode="edit"
+        lookups={lookups}
+        initial={initial}
+        systemVisibility={fieldCfg.systemVisibility}
+        customFields={fieldCfg.customFields}
+        initialCustomData={
+          (row.customData as Record<string, unknown> | null) ?? undefined
+        }
+      />
     </div>
   );
 }

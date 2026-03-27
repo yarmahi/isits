@@ -160,27 +160,27 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 6 - Field Configuration and Extensibility
 
-- [ ] Create `field_definitions` table.
-- [ ] Build manager-only field settings page.
-- [ ] Add support for active/inactive fields.
-- [ ] Add support for required fields.
-- [ ] Add support for searchable fields.
-- [ ] Add support for filterable fields.
-- [ ] Add support for field order.
-- [ ] Add support for select options in custom fields.
-- [ ] Render custom fields from configuration in the create form.
-- [ ] Render custom fields from configuration in the edit form.
-- [ ] Render custom fields from configuration in the detail page.
-- [ ] Store custom field values in `records.custom_data`.
-- [ ] Add basic search/filter support for searchable/filterable custom fields.
-- [ ] Allow optional system fields to be hidden from the UI.
-- [ ] Keep core required columns protected from unsafe removal.
+- [x] Create `field_definitions` table.
+- [x] Build manager-only field settings page.
+- [x] Add support for active/inactive fields.
+- [x] Add support for required fields.
+- [x] Add support for searchable fields.
+- [x] Add support for filterable fields.
+- [x] Add support for field order.
+- [x] Add support for select options in custom fields.
+- [x] Render custom fields from configuration in the create form.
+- [x] Render custom fields from configuration in the edit form.
+- [x] Render custom fields from configuration in the detail page.
+- [x] Store custom field values in `records.custom_data`.
+- [x] Add basic search/filter support for searchable/filterable custom fields.
+- [x] Allow optional system fields to be hidden from the UI.
+- [x] Keep core required columns protected from unsafe removal.
 
 ### Phase 6 Done When
 
-- [ ] The manager can add a custom field without code changes.
-- [ ] The manager can hide an optional field.
-- [ ] The record pages still work correctly with the configured fields.
+- [x] The manager can add a custom field without code changes.
+- [x] The manager can hide an optional field.
+- [x] The record pages still work correctly with the configured fields.
 
 ---
 

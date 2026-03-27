@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { branches, deliveryMethods, records, statuses } from "@/db/schema";
 import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
+import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { generateNextRecordNo } from "@/lib/record-no";
 import { requireAuth, requireManager } from "@/lib/permissions";
 
@@ -28,6 +29,7 @@ const recordFieldsSchema = z.object({
   phoneNumber: z.string().min(1).max(80),
   statusId: z.string().min(1),
   deliveryMethodId: z.string().min(1),
+  customData: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function fetchRecordLookups() {
@@ -54,24 +56,41 @@ export async function createRecordAction(input: unknown) {
   const session = await requireAuth();
   const userId = (session.user as { id: string }).id;
   const parsed = recordFieldsSchema.parse(input);
+  const { systemVisibility, customFields } = await loadRecordFieldConfig();
+  for (const f of customFields) {
+    if (!f.isRequired) continue;
+    const v = parsed.customData?.[f.key];
+    if (v === undefined || v === null || String(v).trim() === "") {
+      return { ok: false as const, error: `${f.label} is required.` };
+    }
+  }
   const id = randomUUID();
   const recordNo = await generateNextRecordNo();
   const db = getDb();
+  const tagNumber = systemVisibility.tagNumber
+    ? (parsed.tagNumber?.trim() || null)
+    : null;
+  const maintenanceNote = systemVisibility.maintenanceNote
+    ? (parsed.maintenanceNote?.trim() || null)
+    : null;
+  const dateReturned = systemVisibility.dateReturned
+    ? (parsed.dateReturned ?? null)
+    : null;
   await db.insert(records).values({
     id,
     recordNo,
     dateReceived: parsed.dateReceived,
-    dateReturned: parsed.dateReturned ?? null,
+    dateReturned,
     branchId: parsed.branchId,
     pcModel: parsed.pcModel.trim(),
     serialNumber: parsed.serialNumber.trim(),
-    tagNumber: parsed.tagNumber?.trim() || null,
-    maintenanceNote: parsed.maintenanceNote?.trim() || null,
+    tagNumber,
+    maintenanceNote,
     customerName: parsed.customerName.trim(),
     phoneNumber: parsed.phoneNumber.trim(),
     statusId: parsed.statusId,
     deliveryMethodId: parsed.deliveryMethodId,
-    customData: {},
+    customData: (parsed.customData ?? {}) as Record<string, unknown>,
     createdBy: userId,
     updatedBy: userId,
   });
@@ -116,6 +135,31 @@ export async function updateRecordAction(input: unknown) {
   if (role !== "manager" && existing.createdBy !== userId) {
     return { ok: false as const, error: "You cannot edit this record." };
   }
+  const { systemVisibility, customFields } = await loadRecordFieldConfig();
+  for (const f of customFields) {
+    if (!f.isRequired) continue;
+    const merged = {
+      ...((existing.customData as Record<string, unknown>) ?? {}),
+      ...(parsed.customData ?? {}),
+    };
+    const v = merged[f.key];
+    if (v === undefined || v === null || String(v).trim() === "") {
+      return { ok: false as const, error: `${f.label} is required.` };
+    }
+  }
+  const tagNumber = systemVisibility.tagNumber
+    ? (parsed.tagNumber?.trim() || null)
+    : existing.tagNumber;
+  const maintenanceNote = systemVisibility.maintenanceNote
+    ? (parsed.maintenanceNote?.trim() || null)
+    : existing.maintenanceNote;
+  const dateReturned = systemVisibility.dateReturned
+    ? (parsed.dateReturned ?? null)
+    : existing.dateReturned;
+  const nextCustom = {
+    ...((existing.customData as Record<string, unknown>) ?? {}),
+    ...(parsed.customData ?? {}),
+  };
   const beforeSnapshot = {
     dateReceived: existing.dateReceived,
     dateReturned: existing.dateReturned,
@@ -131,16 +175,17 @@ export async function updateRecordAction(input: unknown) {
     .update(records)
     .set({
       dateReceived: parsed.dateReceived,
-      dateReturned: parsed.dateReturned ?? null,
+      dateReturned,
       branchId: parsed.branchId,
       pcModel: parsed.pcModel.trim(),
       serialNumber: parsed.serialNumber.trim(),
-      tagNumber: parsed.tagNumber?.trim() || null,
-      maintenanceNote: parsed.maintenanceNote?.trim() || null,
+      tagNumber,
+      maintenanceNote,
       customerName: parsed.customerName.trim(),
       phoneNumber: parsed.phoneNumber.trim(),
       statusId: parsed.statusId,
       deliveryMethodId: parsed.deliveryMethodId,
+      customData: nextCustom,
       updatedBy: userId,
       updatedAt: new Date(),
     })
@@ -157,7 +202,7 @@ export async function updateRecordAction(input: unknown) {
     beforeSnapshot,
     afterSnapshot: {
       dateReceived: parsed.dateReceived,
-      dateReturned: parsed.dateReturned ?? null,
+      dateReturned: dateReturned ?? null,
       branchId: parsed.branchId,
       pcModel: parsed.pcModel.trim(),
       serialNumber: parsed.serialNumber.trim(),

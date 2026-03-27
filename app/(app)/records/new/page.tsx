@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { fetchRecordLookups } from "@/services/records";
 import { RecordForm } from "@/components/records/record-form";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -9,7 +10,10 @@ import { requireAuth } from "@/lib/permissions";
 /** Create a new intake record (Phase 3). */
 export default async function NewRecordPage() {
   await requireAuth();
-  const lookups = await fetchRecordLookups();
+  const [lookups, fieldCfg] = await Promise.all([
+    fetchRecordLookups(),
+    loadRecordFieldConfig(),
+  ]);
   const defaultDateReceived = new Date().toISOString().slice(0, 10);
 
   return (
@@ -36,6 +40,8 @@ export default async function NewRecordPage() {
         mode="create"
         lookups={lookups}
         defaultDateReceived={defaultDateReceived}
+        systemVisibility={fieldCfg.systemVisibility}
+        customFields={fieldCfg.customFields}
       />
     </div>
   );
