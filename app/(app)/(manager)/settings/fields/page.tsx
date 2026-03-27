@@ -1,22 +1,35 @@
-import { loadAllFieldDefinitions } from "@/lib/record-field-config";
+import {
+  FIELD_DEFINITIONS_DEFAULT_PAGE_SIZE,
+  FieldSettingsClient,
+} from "@/components/field-definitions/field-settings-client";
 import { requireManager } from "@/lib/permissions";
-import { FieldSettingsClient } from "@/components/field-definitions/field-settings-client";
+import { loadFieldDefinitionsPage } from "@/lib/record-field-config";
 
-/** Manager-only: record field definitions and optional system column visibility. */
-export default async function FieldSettingsPage() {
+/** Manager-only: record field definitions (Chapter 2 Phase E shell + pagination). */
+export default async function FieldSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; pageSize?: string }>;
+}) {
   await requireManager();
-  const rows = await loadAllFieldDefinitions();
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
+  const pageSize = Math.min(
+    50,
+    Math.max(
+      5,
+      parseInt(sp.pageSize ?? String(FIELD_DEFINITIONS_DEFAULT_PAGE_SIZE), 10) ||
+        FIELD_DEFINITIONS_DEFAULT_PAGE_SIZE,
+    ),
+  );
+  const { rows, total } = await loadFieldDefinitionsPage({ page, pageSize });
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold tracking-tight">Record fields</h2>
-        <p className="text-sm text-muted-foreground">
-          Show or hide optional columns, add custom fields, and control how they
-          appear on records and in search.
-        </p>
-      </div>
-      <FieldSettingsClient initialRows={rows} />
-    </div>
+    <FieldSettingsClient
+      initialRows={rows}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+    />
   );
 }

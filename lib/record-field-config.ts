@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { fieldDefinitions } from "@/db/schema";
 
@@ -85,7 +85,7 @@ export async function loadRecordFieldConfig(): Promise<{
   };
 }
 
-/** Include inactive rows for manager settings. */
+/** Include inactive rows for manager settings (full list). */
 export async function loadAllFieldDefinitions(): Promise<FieldDefinitionPublic[]> {
   const db = getDb();
   const rows = await db
@@ -93,4 +93,30 @@ export async function loadAllFieldDefinitions(): Promise<FieldDefinitionPublic[]
     .from(fieldDefinitions)
     .orderBy(asc(fieldDefinitions.sortOrder), asc(fieldDefinitions.label));
   return rows.map(rowToPublic);
+}
+
+/** Paginated field definitions for Settings (same ordering as full list). */
+export async function loadFieldDefinitionsPage(params: {
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: FieldDefinitionPublic[]; total: number }> {
+  const db = getDb();
+  const page = Math.max(1, params.page);
+  const pageSize = Math.min(50, Math.max(1, params.pageSize));
+  const offset = (page - 1) * pageSize;
+
+  const [tot] = await db.select({ c: count() }).from(fieldDefinitions);
+  const total = Number(tot?.c ?? 0);
+
+  const rows = await db
+    .select()
+    .from(fieldDefinitions)
+    .orderBy(asc(fieldDefinitions.sortOrder), asc(fieldDefinitions.label))
+    .limit(pageSize)
+    .offset(offset);
+
+  return {
+    total,
+    rows: rows.map(rowToPublic),
+  };
 }

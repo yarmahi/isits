@@ -66,10 +66,12 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase E — Record fields in the new shell
 
-- [ ] Mount existing **Record fields** UI (`FieldSettingsClient` + `services/field-definitions` actions) inside the **same** settings layout as Phases B–D.
-- [ ] Align **table**, **modals**, **typography**, and **spacing** with lookup pages.
-- [ ] **Pagination** for the field definitions table if the list can grow large; otherwise document a single-page table with a note in this checklist when closed.
-- [ ] Preserve existing behaviors: toggles, custom field create/delete, seed-compatible system rows.
+- [x] Mount existing **Record fields** UI (`FieldSettingsClient` + `services/field-definitions` actions) inside the **same** settings layout as Phases B–D.
+- [x] Align **table**, **modals**, **typography**, and **spacing** with lookup pages.
+- [x] **Pagination** for the field definitions table if the list can grow large; otherwise document a single-page table with a note in this checklist when closed.
+- [x] Preserve existing behaviors: toggles, custom field create/delete, seed-compatible system rows.
+
+**Note:** Field definitions use **server-side pagination** (`loadFieldDefinitionsPage` in `lib/record-field-config.ts`, default page size 10, URL `?page=` / `?pageSize=`) so the list can grow without a huge first paint.
 
 ---
 

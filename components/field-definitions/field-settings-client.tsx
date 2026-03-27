@@ -1,21 +1,54 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
+import { useEffect, useMemo, useState } from "react";
+import { ListTree, Plus, Trash2 } from "lucide-react";
 import type { FieldDefinitionPublic } from "@/lib/record-field-config";
 import {
   createCustomFieldAction,
   deleteCustomFieldAction,
   updateFieldDefinitionAction,
 } from "@/services/field-definitions";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import {
+  confirmDanger,
+  toastError,
+  toastSuccess,
+} from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { TablePagination } from "@/components/table-pagination";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 const FIELD_TYPES = ["text", "textarea", "number", "date", "select"] as const;
+
+export const FIELD_DEFINITIONS_DEFAULT_PAGE_SIZE = 10;
+
+function buildFieldsUrl(page: number, pageSize: number) {
+  const usp = new URLSearchParams();
+  if (page > 1) usp.set("page", String(page));
+  if (pageSize !== FIELD_DEFINITIONS_DEFAULT_PAGE_SIZE) {
+    usp.set("pageSize", String(pageSize));
+  }
+  const s = usp.toString();
+  return s ? `/settings/fields?${s}` : "/settings/fields";
+}
 
 function parseSelectOptions(raw: string): { value: string; label: string }[] {
   const out: { value: string; label: string }[] = [];
@@ -70,21 +103,44 @@ function Toggle({
   );
 }
 
+type Props = {
+  initialRows: FieldDefinitionPublic[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+/** Record field definitions: aligned with lookup settings tables (Chapter 2 Phase E). */
 export function FieldSettingsClient({
   initialRows,
-}: {
-  initialRows: FieldDefinitionPublic[];
-}) {
+  total,
+  page,
+  pageSize,
+}: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [rows, setRows] = useState(initialRows);
-  useEffect(() => {
-    setRows(initialRows);
-  }, [initialRows]);
+  const [createOpen, setCreateOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [fieldType, setFieldType] =
     useState<(typeof FIELD_TYPES)[number]>("text");
   const [selectLines, setSelectLines] = useState("");
+
+  useEffect(() => {
+    setRows(initialRows);
+  }, [initialRows]);
+
+  useEffect(() => {
+    if (!createOpen) return;
+    setLabel("");
+    setFieldType("text");
+    setSelectLines("");
+  }, [createOpen]);
+
+  const buildHref = useMemo(
+    () => (nextPage: number) => buildFieldsUrl(nextPage, pageSize),
+    [pageSize],
+  );
 
   function patchLocal(id: string, patch: Partial<FieldDefinitionPublic>) {
     setRows((prev) =>
@@ -156,10 +212,8 @@ export function FieldSettingsClient({
         await toastError("Could not create", msg || undefined);
         return;
       }
-      setLabel("");
-      setFieldType("text");
-      setSelectLines("");
       await toastSuccess("Custom field added");
+      setCreateOpen(false);
       router.refresh();
     } finally {
       setPending(false);
@@ -167,15 +221,12 @@ export function FieldSettingsClient({
   }
 
   async function onDelete(row: FieldDefinitionPublic) {
-    const r = await Swal.fire({
+    const ok = await confirmDanger({
       title: "Delete this field?",
       text: row.label,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
+      confirmText: "Delete",
     });
-    if (!r.isConfirmed) return;
+    if (!ok) return;
     setPending(true);
     try {
       const res = await deleteCustomFieldAction({ id: row.id });
@@ -191,165 +242,238 @@ export function FieldSettingsClient({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="overflow-x-auto rounded-xl border border-border/80">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-border/80 bg-muted/40">
-              <th className="px-3 py-2 font-medium">Field</th>
-              <th className="px-3 py-2 font-medium">Type</th>
-              <th className="px-3 py-2 font-medium text-center">Active</th>
-              <th className="px-3 py-2 font-medium text-center">Required</th>
-              <th className="px-3 py-2 font-medium text-center">Search</th>
-              <th className="px-3 py-2 font-medium text-center">Filter</th>
-              <th className="px-3 py-2 font-medium">Order</th>
-              <th className="px-3 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-border/60 last:border-0"
-              >
-                <td className="px-3 py-2 align-middle">
-                  <span className="font-medium">{row.label}</span>
-                  {!row.isCustom && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      (system)
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-2 align-middle text-muted-foreground">
-                  {row.fieldType}
-                </td>
-                <td className="px-3 py-2 text-center align-middle">
-                  <div className="flex justify-center">
-                    <Toggle
-                      checked={row.isActive}
-                      aria-label={`Active: ${row.label}`}
-                      onChange={(next) => onToggle(row, "isActive", next)}
-                      disabled={pending}
-                    />
-                  </div>
-                </td>
-                <td className="px-3 py-2 text-center align-middle">
-                  <div className="flex justify-center">
-                    <Toggle
-                      checked={row.isRequired}
-                      aria-label={`Required: ${row.label}`}
-                      onChange={(next) => onToggle(row, "isRequired", next)}
-                      disabled={pending || !row.isCustom}
-                    />
-                  </div>
-                </td>
-                <td className="px-3 py-2 text-center align-middle">
-                  <div className="flex justify-center">
-                    <Toggle
-                      checked={row.searchable}
-                      aria-label={`Searchable: ${row.label}`}
-                      onChange={(next) => onToggle(row, "searchable", next)}
-                      disabled={pending}
-                    />
-                  </div>
-                </td>
-                <td className="px-3 py-2 text-center align-middle">
-                  <div className="flex justify-center">
-                    <Toggle
-                      checked={row.filterable}
-                      aria-label={`Filterable: ${row.label}`}
-                      onChange={(next) => onToggle(row, "filterable", next)}
-                      disabled={pending}
-                    />
-                  </div>
-                </td>
-                <td className="px-3 py-2 align-middle">
-                  <Input
-                    key={`${row.id}-${row.sortOrder}`}
-                    type="number"
-                    min={0}
-                    max={9999}
-                    className="h-8 w-20"
-                    defaultValue={row.sortOrder}
-                    disabled={pending}
-                    onBlur={(e) => onSortBlur(row, e.target.value)}
-                  />
-                </td>
-                <td className="px-3 py-2 align-middle text-right">
-                  {row.isCustom && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={pending}
-                      onClick={() => onDelete(row)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold tracking-tight">Record fields</h2>
+          <p className="text-sm text-muted-foreground">
+            Show or hide optional columns, add custom fields, and control how they
+            appear on records and in search.
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="shrink-0 gap-2"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-4" aria-hidden />
+          Add custom field
+        </Button>
       </div>
 
-      <form
-        onSubmit={onCreate}
-        className="max-w-xl space-y-4 rounded-xl border border-border/80 bg-muted/20 p-4"
-      >
-        <h2 className="text-base font-semibold">Add custom field</h2>
-        <FieldGroup className="gap-3">
-          <Field>
-            <FieldLabel htmlFor="newLabel">Label</FieldLabel>
-            <Input
-              id="newLabel"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="e.g. Asset ID"
-              disabled={pending}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="newType">Type</FieldLabel>
-            <select
-              id="newType"
-              value={fieldType}
-              onChange={(e) =>
-                setFieldType(e.target.value as (typeof FIELD_TYPES)[number])
-              }
-              disabled={pending}
-              className="flex h-8 w-full max-w-xs rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-            >
-              {FIELD_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </Field>
-          {fieldType === "select" && (
-            <Field>
-              <FieldLabel htmlFor="selectOpts">
-                Select options (one per line:{" "}
-                <code className="text-xs">value|label</code>)
-              </FieldLabel>
-              <textarea
-                id="selectOpts"
-                value={selectLines}
-                onChange={(e) => setSelectLines(e.target.value)}
-                rows={4}
+      <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="px-4">Field</TableHead>
+              <TableHead className="px-4">Type</TableHead>
+              <TableHead className="px-4 text-center">Active</TableHead>
+              <TableHead className="px-4 text-center">Required</TableHead>
+              <TableHead className="px-4 text-center">Search</TableHead>
+              <TableHead className="px-4 text-center">Filter</TableHead>
+              <TableHead className="px-4">Order</TableHead>
+              <TableHead className="px-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={8} className="p-0">
+                  <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-muted/60">
+                      <ListTree
+                        className="size-6 text-muted-foreground"
+                        aria-hidden
+                      />
+                    </div>
+                    <p className="font-medium text-foreground">
+                      No field definitions
+                    </p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      Run field-definition seeds or add a custom field. System
+                      rows are created by migrations and seeds.
+                    </p>
+                    <Button
+                      type="button"
+                      className="gap-2"
+                      onClick={() => setCreateOpen(true)}
+                    >
+                      <Plus className="size-4" aria-hidden />
+                      Add custom field
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="px-4 align-middle">
+                    <span className="font-medium">{row.label}</span>
+                    {!row.isCustom && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        (system)
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-4 align-middle text-muted-foreground">
+                    {row.fieldType}
+                  </TableCell>
+                  <TableCell className="px-4 text-center align-middle">
+                    <div className="flex justify-center">
+                      <Toggle
+                        checked={row.isActive}
+                        aria-label={`Active: ${row.label}`}
+                        onChange={(next) => onToggle(row, "isActive", next)}
+                        disabled={pending}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 text-center align-middle">
+                    <div className="flex justify-center">
+                      <Toggle
+                        checked={row.isRequired}
+                        aria-label={`Required: ${row.label}`}
+                        onChange={(next) => onToggle(row, "isRequired", next)}
+                        disabled={pending || !row.isCustom}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 text-center align-middle">
+                    <div className="flex justify-center">
+                      <Toggle
+                        checked={row.searchable}
+                        aria-label={`Searchable: ${row.label}`}
+                        onChange={(next) => onToggle(row, "searchable", next)}
+                        disabled={pending}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 text-center align-middle">
+                    <div className="flex justify-center">
+                      <Toggle
+                        checked={row.filterable}
+                        aria-label={`Filterable: ${row.label}`}
+                        onChange={(next) => onToggle(row, "filterable", next)}
+                        disabled={pending}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 align-middle">
+                    <Input
+                      key={`${row.id}-${row.sortOrder}`}
+                      type="number"
+                      min={0}
+                      max={9999}
+                      className="h-8 w-20"
+                      defaultValue={row.sortOrder}
+                      disabled={pending}
+                      onBlur={(e) => onSortBlur(row, e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell className="px-4 text-right align-middle">
+                    {row.isCustom ? (
+                      <button
+                        type="button"
+                        className="cursor-pointer font-medium text-destructive hover:underline disabled:opacity-50"
+                        disabled={pending}
+                        onClick={() => onDelete(row)}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <Trash2 className="size-3.5" aria-hidden />
+                          Delete
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+        <TablePagination
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          buildHref={buildHref}
+          aria-label="Field definitions pagination"
+        />
+      </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-h-[min(90vh,36rem)] overflow-y-auto sm:max-w-md">
+          <form onSubmit={onCreate}>
+            <DialogHeader>
+              <DialogTitle>Add custom field</DialogTitle>
+              <DialogDescription>
+                Custom fields are stored with each record and can be optional or
+                required. Select types need at least one option.
+              </DialogDescription>
+            </DialogHeader>
+            <FieldGroup className="gap-3 py-2">
+              <Field>
+                <FieldLabel htmlFor="newLabel">Label</FieldLabel>
+                <Input
+                  id="newLabel"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="e.g. Asset ID"
+                  disabled={pending}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="newType">Type</FieldLabel>
+                <select
+                  id="newType"
+                  value={fieldType}
+                  onChange={(e) =>
+                    setFieldType(e.target.value as (typeof FIELD_TYPES)[number])
+                  }
+                  disabled={pending}
+                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                >
+                  {FIELD_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              {fieldType === "select" && (
+                <Field>
+                  <FieldLabel htmlFor="selectOpts">
+                    Select options (one per line:{" "}
+                    <code className="text-xs">value|label</code>)
+                  </FieldLabel>
+                  <textarea
+                    id="selectOpts"
+                    value={selectLines}
+                    onChange={(e) => setSelectLines(e.target.value)}
+                    rows={4}
+                    disabled={pending}
+                    className="flex min-h-24 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                    placeholder={"opt_a|Option A\nopt_b|Option B"}
+                  />
+                </Field>
+              )}
+            </FieldGroup>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
                 disabled={pending}
-                className="flex min-h-24 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                placeholder={"opt_a|Option A\nopt_b|Option B"}
-              />
-            </Field>
-          )}
-        </FieldGroup>
-        <Button type="submit" disabled={pending}>
-          Add field
-        </Button>
-      </form>
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                Add field
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
