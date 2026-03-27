@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { statuses } from "@/db/schema";
+import { deliveryMethods } from "@/db/schema";
 import { ImportRowError } from "@/lib/import-csv-errors";
 import {
   parseBool,
@@ -19,15 +19,12 @@ import { requireManager } from "@/lib/permissions";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_ROWS = 5000;
-const CODE_RE = /^[a-z0-9_]+$/;
 
 /**
- * Statuses CSV import (Phase C). Unique key: `code` (DB unique).
- * - Optional `id` (UUID): update existing or insert with that id.
- * - Duplicate `code` in file (same normalized code): later rows skipped.
- * - `code` already used by another status and row does not target that id: skipped.
+ * Delivery methods CSV import (Phase D). Same rules as statuses import: unique `code`.
+ * See `services/import-statuses-csv.ts`.
  */
-export async function importStatusesCsvAction(
+export async function importDeliveryMethodsCsvAction(
   formData: FormData,
 ): Promise<ImportCsvResult> {
   await requireManager();
@@ -63,8 +60,8 @@ export async function importStatusesCsvAction(
   try {
     result = await db.transaction(async (tx) => {
       const existing = await tx
-        .select({ id: statuses.id, code: statuses.code })
-        .from(statuses);
+        .select({ id: deliveryMethods.id, code: deliveryMethods.code })
+        .from(deliveryMethods);
 
       const idSet = new Set(existing.map((e) => e.id));
       const codeKeyToId = new Map<string, string>();
@@ -131,17 +128,18 @@ export async function importStatusesCsvAction(
 
           if (existed) {
             await tx
-              .update(statuses)
+              .update(deliveryMethods)
               .set({
                 code,
                 name: nameRaw,
                 sortOrder,
                 isActive,
+                updatedAt: new Date(),
               })
-              .where(eq(statuses.id, idRaw));
+              .where(eq(deliveryMethods.id, idRaw));
             updated++;
           } else {
-            await tx.insert(statuses).values({
+            await tx.insert(deliveryMethods).values({
               id: idRaw,
               code,
               name: nameRaw,
@@ -159,7 +157,7 @@ export async function importStatusesCsvAction(
             continue;
           }
           const newId = randomUUID();
-          await tx.insert(statuses).values({
+          await tx.insert(deliveryMethods).values({
             id: newId,
             code,
             name: nameRaw,
@@ -182,7 +180,7 @@ export async function importStatusesCsvAction(
     throw e;
   }
 
-  revalidatePath("/settings/statuses");
+  revalidatePath("/settings/delivery-methods");
   revalidatePath("/records");
   revalidatePath("/records/new");
 

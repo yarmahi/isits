@@ -39,7 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
 import { DELIVERY_METHODS_IMPORT } from "@/lib/import-csv-templates";
-import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
+import { importDeliveryMethodsCsvFromFile } from "@/lib/delivery-methods-import-csv-client";
 
 export const DELIVERY_METHODS_DEFAULT_PAGE_SIZE = 10;
 
@@ -455,7 +455,8 @@ export function DeliveryMethodsSettingsClient({
         templateFilename={DELIVERY_METHODS_IMPORT.filename}
         headers={DELIVERY_METHODS_IMPORT.headers}
         exampleRow={DELIVERY_METHODS_IMPORT.exampleRow}
-        onImport={stubCsvImportFromFile}
+        onImport={importDeliveryMethodsCsvFromFile}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );

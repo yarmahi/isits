@@ -67,9 +67,11 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase D — Delivery methods CSV import
 
-- [ ] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
-- [ ] Enforce **unique `code`**.
-- [ ] **Revalidate** `/settings/delivery-methods` and record routes as needed.
+- [x] **Template columns** (suggested): `code`, `name`, `sort_order`, `is_active`.
+- [x] Enforce **unique `code`**.
+- [x] **Revalidate** `/settings/delivery-methods` and record routes as needed.
+
+**Decisions (v1):** Same as statuses (Phase C): optional `id`, natural key `code`, shared `parseCodeField` in `lib/import-csv-parse.ts`. See `services/import-delivery-methods-csv.ts`.
 
 ---
 

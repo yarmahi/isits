@@ -31,3 +31,20 @@ export function parseSortOrder(
   }
   return n;
 }
+
+const CODE_RE = /^[a-z0-9_]+$/;
+
+/** Status / delivery-method `code`: lowercase, digits, underscore; max 80. */
+export function parseCodeField(raw: string, rowNum: number): string {
+  if (raw.length > 80) {
+    throw new ImportRowError(
+      `Row ${rowNum}: code must be at most 80 characters.`,
+    );
+  }
+  if (!CODE_RE.test(raw)) {
+    throw new ImportRowError(
+      `Row ${rowNum}: code must use lowercase letters, numbers, and underscores only.`,
+    );
+  }
+  return raw;
+}
