@@ -8,6 +8,18 @@ type Props = {
   "aria-label"?: string;
 };
 
+function toNonNegInt(n: unknown): number {
+  const x = Number(n);
+  if (!Number.isFinite(x) || x < 0) return 0;
+  return Math.floor(x);
+}
+
+function toPositiveInt(n: unknown, fallback: number): number {
+  const x = Number(n);
+  if (!Number.isFinite(x) || x < 1) return fallback;
+  return Math.min(10_000, Math.floor(x));
+}
+
 /** Footer row for data tables: range summary + prev/next. Use on every paginated table. */
 export function TablePagination({
   total,
@@ -16,10 +28,19 @@ export function TablePagination({
   buildHref,
   "aria-label": ariaLabel = "Pagination",
 }: Props) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
-  const safePage = Math.min(Math.max(1, page), totalPages);
-  const from = total === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const to = Math.min(safePage * pageSize, total);
+  const safeTotal = toNonNegInt(total);
+  const safePageSize = toPositiveInt(pageSize, 10);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(safeTotal / safePageSize) || 1,
+  );
+  const safePage = Math.min(
+    toPositiveInt(page, 1),
+    totalPages,
+  );
+  const from =
+    safeTotal === 0 ? 0 : (safePage - 1) * safePageSize + 1;
+  const to = Math.min(safePage * safePageSize, safeTotal);
 
   return (
     <div
@@ -31,7 +52,7 @@ export function TablePagination({
         Showing{" "}
         <span className="font-medium text-foreground">{from}</span>–
         <span className="font-medium text-foreground">{to}</span> of{" "}
-        <span className="font-medium text-foreground">{total}</span>
+        <span className="font-medium text-foreground">{safeTotal}</span>
       </p>
       <div className="flex items-center gap-2">
         <PaginationLink
@@ -45,7 +66,7 @@ export function TablePagination({
         </span>
         <PaginationLink
           href={buildHref(safePage + 1)}
-          disabled={safePage >= totalPages || total === 0}
+          disabled={safePage >= totalPages || safeTotal === 0}
         >
           Next
         </PaginationLink>
