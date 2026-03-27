@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateUserAction } from "@/services/users";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import { toastSuccess } from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -37,9 +37,11 @@ export function UserEditForm({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(initialActive);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setFormError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
     const name = String(fd.get("name") ?? "");
@@ -55,9 +57,10 @@ export function UserEditForm({
     });
     setPending(false);
     if (!res.ok) {
-      await toastError(
-        "Could not save",
-        "error" in res ? res.error : "Something went wrong.",
+      setFormError(
+        "error" in res && typeof res.error === "string"
+          ? res.error
+          : "Could not save changes.",
       );
       return;
     }
@@ -70,6 +73,14 @@ export function UserEditForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
+      {formError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+        >
+          {formError}
+        </div>
+      )}
       <FieldGroup>
         {isManager && (
           <FieldDescription>

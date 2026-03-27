@@ -5,12 +5,54 @@ import Swal from "sweetalert2";
 /** Minimum visible time for toasts (ms). */
 const MIN_TIMER_MS = 2000;
 
-/** Above Radix/shadcn dialogs (`z-50`) so toasts are visible from modals. */
-function raiseToastContainer() {
+/** Above Radix/shadcn dialogs (`z-50`) so toasts and confirms stay on top. */
+export function raiseSwalZIndex() {
   const c = Swal.getContainer();
   if (c instanceof HTMLElement) {
     c.style.zIndex = "200000";
   }
+}
+
+function raiseToastContainer() {
+  raiseSwalZIndex();
+}
+
+/** Confirm destructive or irreversible actions (archive, delete). */
+export async function confirmDanger(opts: {
+  title: string;
+  text?: string;
+  confirmText?: string;
+}): Promise<boolean> {
+  const r = await Swal.fire({
+    title: opts.title,
+    text: opts.text,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: opts.confirmText ?? "Confirm",
+    cancelButtonText: "Cancel",
+    focusCancel: true,
+    didOpen: raiseSwalZIndex,
+  });
+  return r.isConfirmed;
+}
+
+/** Confirm neutral actions (restore, etc.). */
+export async function confirmNeutral(opts: {
+  title: string;
+  text?: string;
+  confirmText?: string;
+}): Promise<boolean> {
+  const r = await Swal.fire({
+    title: opts.title,
+    text: opts.text,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: opts.confirmText ?? "Confirm",
+    cancelButtonText: "Cancel",
+    focusCancel: true,
+    didOpen: raiseSwalZIndex,
+  });
+  return r.isConfirmed;
 }
 
 export function toastSuccess(title: string, text?: string) {

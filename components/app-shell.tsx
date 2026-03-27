@@ -155,6 +155,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
+      <a
+        href="#main-content"
+        className="sr-only left-4 top-4 z-[100] rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground shadow-md outline-none ring-2 ring-ring focus:fixed focus:not-sr-only"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/90">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 md:gap-6 md:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
@@ -189,7 +195,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <Menu className="size-4" />
                 </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-0">
+                <SheetContent
+                  side="left"
+                  className="w-72 p-0"
+                  aria-label="Main navigation"
+                >
                   <div className="flex h-14 items-center border-b px-4">
                     <AppLogo size="sm" />
                   </div>
@@ -281,7 +291,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 md:px-6 md:py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 px-4 py-6 outline-none md:px-6 md:py-8"
+      >
         <PageViewLogger />
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>

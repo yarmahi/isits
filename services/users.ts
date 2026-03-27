@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { account, user } from "@/db/schema";
 import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
+import { formatZodError } from "@/lib/format-zod-error";
 import { requireManager } from "@/lib/permissions";
 import { syntheticEmailFromUsername, USERNAME_REGEX } from "@/lib/user-helpers";
 
@@ -32,7 +33,11 @@ const createSpecialistSchema = z.object({
 export async function createSpecialistAction(input: unknown) {
   const session = await requireManager();
   const actorId = (session.user as { id: string }).id;
-  const parsed = createSpecialistSchema.parse(input);
+  const parsedResult = createSpecialistSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const uname = parsed.username.trim().toLowerCase();
   const db = getDb();
   const id = randomUUID();
@@ -93,7 +98,11 @@ const updateUserSchema = z.object({
 /** Updates a user; managers cannot deactivate their own account here. */
 export async function updateUserAction(input: unknown) {
   const session = await requireManager();
-  const parsed = updateUserSchema.parse(input);
+  const parsedResult = updateUserSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const uname = parsed.username.trim().toLowerCase();
   const email = syntheticEmailFromUsername(uname);
   const db = getDb();
@@ -198,7 +207,11 @@ const setUserActiveSchema = z.object({
 /** Sets account active flag (e.g. deactivate specialist from the list). */
 export async function setUserActiveAction(input: unknown) {
   const session = await requireManager();
-  const parsed = setUserActiveSchema.parse(input);
+  const parsedResult = setUserActiveSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const db = getDb();
   const [existing] = await db
     .select()

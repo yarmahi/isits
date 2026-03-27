@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { asc, count, eq } from "drizzle-orm";
-import { Plus } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
 import { getDb } from "@/db";
 import { records, statuses, user } from "@/db/schema";
 import { requireAuth } from "@/lib/permissions";
@@ -125,16 +125,35 @@ export default async function RecordsListPage({
 
       <div className="space-y-3">
         {rows.length === 0 ? (
-          <div className="rounded-xl border border-border/80 bg-card p-8 text-center text-muted-foreground shadow-sm">
-            No records match.{" "}
-            <Link href="/records/new" className="text-primary underline">
-              Create one
-            </Link>
-            {" or "}
-            <Link href="/records" className="text-primary underline">
-              clear filters
-            </Link>
-            .
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center shadow-sm">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/80">
+              <ClipboardList
+                className="size-7 text-muted-foreground"
+                aria-hidden
+              />
+            </div>
+            <div className="max-w-sm space-y-2">
+              <p className="font-medium text-foreground">No records found</p>
+              <p className="text-sm text-muted-foreground">
+                Try adjusting search or filters, add a new intake, or reset the
+                list.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/records/new"
+                className={cn(buttonVariants({ variant: "default" }), "gap-2")}
+              >
+                <Plus className="size-4" aria-hidden />
+                New record
+              </Link>
+              <Link
+                href="/records"
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                Clear filters
+              </Link>
+            </div>
           </div>
         ) : (
           <>

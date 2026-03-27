@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Swal from "sweetalert2";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { archiveRecordAction } from "@/services/records";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import { confirmDanger, toastError, toastSuccess } from "@/lib/sweet-alert";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Button } from "@/components/ui/button";
 type Props = {
@@ -21,19 +20,19 @@ export function RecordRowActions({ recordId, canEdit, canArchive }: Props) {
   const [pending, setPending] = useState(false);
 
   async function onArchive() {
-    const r = await Swal.fire({
+    const ok = await confirmDanger({
       title: "Archive this record?",
       text: "It will be hidden from the default list until restored.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Archive",
+      confirmText: "Archive",
     });
-    if (!r.isConfirmed) return;
+    if (!ok) return;
     setPending(true);
     const res = await archiveRecordAction({ recordId });
     setPending(false);
     if (!res.ok) {
-      await toastError("Could not archive", "error" in res ? res.error : "");
+      const msg =
+        "error" in res && typeof res.error === "string" ? res.error : "";
+      await toastError("Could not archive", msg || undefined);
       return;
     }
     await toastSuccess("Record archived");

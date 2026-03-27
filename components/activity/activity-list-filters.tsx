@@ -66,23 +66,33 @@ export function ActivityListFilters({ parsed, actorOptions }: Props) {
             ))}
           </select>
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           <button
             type="submit"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={cn(
+              buttonVariants({ variant: "secondary" }),
+              "w-full sm:w-auto",
+            )}
           >
             Apply
           </button>
           <Link
             href="/activity"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-center sm:w-auto",
+            )}
           >
             Clear all
           </Link>
           <button
             type="button"
-            className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "gap-1.5 w-full sm:w-auto",
+            )}
             aria-expanded={advancedOpen}
+            aria-controls="activity-list-advanced-filters"
             onClick={() => setAdvancedOpen((o) => !o)}
           >
             Advanced filters
@@ -103,10 +113,9 @@ export function ActivityListFilters({ parsed, actorOptions }: Props) {
       </div>
 
       <div
-        className={cn(
-          "grid gap-3 border-t border-border/80 pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-          !advancedOpen && "hidden",
-        )}
+        id="activity-list-advanced-filters"
+        hidden={!advancedOpen}
+        className="grid gap-3 border-t border-border/80 pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">Event</span>

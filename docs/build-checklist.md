@@ -108,7 +108,7 @@ Use this checklist while implementing the phased plan.
 - [x] Add empty-state design.
 - [x] Add loading-state design.
 - [x] Create indexes for frequent filters and sort fields.
-- [ ] Add duplicate warning checks for serial number and tag number if desired.
+- [x] Duplicate checks for serial/tag among **active** records on save (archived rows ignored).
 
 ### Phase 4 Done When
 
@@ -186,25 +186,25 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 7 - UX Refinement, Validation, and Hardening
 
-- [ ] Improve form validation messages.
-- [ ] Improve error handling for failed submissions.
-- [ ] Add loading states for key actions.
-- [ ] Add friendly empty states.
-- [ ] Add confirmation dialogs for archive, restore, deactivate, and similar actions.
-- [ ] Improve mobile navigation behavior.
-- [ ] Improve filter UI on small screens.
-- [ ] Improve spacing and readability for cards and forms.
-- [ ] Ensure labels and form controls are accessible.
-- [ ] Check keyboard navigation on main pages.
-- [ ] Ensure top navigation remains simple and uncluttered.
-- [ ] Review page performance on realistic data.
-- [ ] Review duplicate warning experience.
+- [x] Improve form validation messages.
+- [x] Improve error handling for failed submissions.
+- [x] Add loading states for key actions.
+- [x] Add friendly empty states.
+- [x] Add confirmation dialogs for archive, restore, deactivate, and similar actions.
+- [x] Improve mobile navigation behavior.
+- [x] Improve filter UI on small screens.
+- [x] Improve spacing and readability for cards and forms.
+- [x] Ensure labels and form controls are accessible.
+- [x] Check keyboard navigation on main pages.
+- [x] Ensure top navigation remains simple and uncluttered.
+- [x] Review page performance on realistic data.
+- [x] Review duplicate check behavior (active vs archived records).
 
 ### Phase 7 Done When
 
-- [ ] The UI feels clean and focused.
-- [ ] The mobile experience feels intentional.
-- [ ] Users get clear feedback for both success and failure states.
+- [x] The UI feels clean and focused.
+- [x] The mobile experience feels intentional.
+- [x] Users get clear feedback for both success and failure states.
 
 ---
 

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createRecordAction, updateRecordAction } from "@/services/records";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import { toastSuccess } from "@/lib/sweet-alert";
 import type {
   FieldDefinitionPublic,
   SystemVisibility,
@@ -103,6 +103,7 @@ export function RecordForm({
 }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const dateReceivedDefault =
     mode === "edit" && initial?.dateReceived
@@ -111,6 +112,7 @@ export function RecordForm({
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setFormError(null);
     setPending(true);
     const fd = new FormData(e.currentTarget);
     const customData = collectCustomData(fd, customFields);
@@ -139,9 +141,10 @@ export function RecordForm({
     setPending(false);
 
     if (!res.ok) {
-      await toastError(
-        "Could not save",
-        "error" in res ? res.error : "Unknown error",
+      setFormError(
+        "error" in res && typeof res.error === "string"
+          ? res.error
+          : "Could not save. Try again.",
       );
       return;
     }
@@ -161,6 +164,14 @@ export function RecordForm({
 
   return (
     <form onSubmit={onSubmit} className="max-w-2xl space-y-6">
+      {formError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+        >
+          {formError}
+        </div>
+      )}
       {mode === "edit" && initial && (
         <p className="text-sm text-muted-foreground">
           Record number:{" "}

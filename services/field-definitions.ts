@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { fieldDefinitions } from "@/db/schema";
+import { formatZodError } from "@/lib/format-zod-error";
 import { requireManager } from "@/lib/permissions";
 
 const FIELD_TYPES = z.enum(["text", "textarea", "number", "date", "select"]);
@@ -43,7 +44,11 @@ const createSchema = z.object({
 
 export async function updateFieldDefinitionAction(input: unknown) {
   await requireManager();
-  const parsed = updateSchema.parse(input);
+  const parsedResult = updateSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const db = getDb();
   const [row] = await db
     .select()
@@ -78,7 +83,11 @@ export async function updateFieldDefinitionAction(input: unknown) {
 
 export async function createCustomFieldAction(input: unknown) {
   await requireManager();
-  const parsed = createSchema.parse(input);
+  const parsedResult = createSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const db = getDb();
   let key = slugKey(parsed.label);
   for (let i = 0; i < 20; i++) {
@@ -112,7 +121,11 @@ export async function createCustomFieldAction(input: unknown) {
 
 export async function deleteCustomFieldAction(input: unknown) {
   await requireManager();
-  const { id } = z.object({ id: z.string().min(1) }).parse(input);
+  const idResult = z.object({ id: z.string().min(1) }).safeParse(input);
+  if (!idResult.success) {
+    return { ok: false as const, error: formatZodError(idResult.error) };
+  }
+  const { id } = idResult.data;
   const db = getDb();
   const [row] = await db
     .select()

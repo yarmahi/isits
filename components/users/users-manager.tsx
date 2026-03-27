@@ -231,7 +231,7 @@ export function UsersManager({
             ))}
           </select>
         </Field>
-        <Button type="submit" className="w-full md:w-auto">
+        <Button type="submit" className="h-8 w-full shrink-0 md:w-auto">
           Apply filters
         </Button>
       </form>
@@ -251,11 +251,15 @@ export function UsersManager({
           <TableBody>
             {users.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No users match these filters.
+                <TableCell colSpan={6} className="p-0">
+                  <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+                    <p className="font-medium text-foreground">
+                      No users match these filters
+                    </p>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      Try another search term or change role and status filters.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

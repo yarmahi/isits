@@ -61,6 +61,7 @@ export function LoginForm() {
       <CardContent>
         {error && (
           <div
+            id="login-error"
             role="alert"
             className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-left text-sm text-destructive"
           >
@@ -80,6 +81,8 @@ export function LoginForm() {
                 minLength={4}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "login-error" : undefined}
               />
               <FieldDescription>At least 4 characters.</FieldDescription>
             </Field>
@@ -94,6 +97,8 @@ export function LoginForm() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "login-error" : undefined}
               />
               <FieldDescription>At least 6 characters.</FieldDescription>
             </Field>

@@ -73,16 +73,22 @@ export function RecordsListFilters({
             ))}
           </select>
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           <button
             type="submit"
-            className={cn(buttonVariants({ variant: "secondary" }))}
+            className={cn(
+              buttonVariants({ variant: "secondary" }),
+              "w-full sm:w-auto",
+            )}
           >
             Apply
           </button>
           <Link
             href="/records"
-            className={cn(buttonVariants({ variant: "outline" }))}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-center sm:w-auto",
+            )}
           >
             Clear all
           </Link>
@@ -93,6 +99,7 @@ export function RecordsListFilters({
               "gap-1.5",
             )}
             aria-expanded={advancedOpen}
+            aria-controls="records-list-advanced-filters"
             onClick={() => setAdvancedOpen((o) => !o)}
           >
             Advanced filters
@@ -113,10 +120,9 @@ export function RecordsListFilters({
       </div>
 
       <div
-        className={cn(
-          "grid gap-3 border-t border-border/80 pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-          !advancedOpen && "hidden",
-        )}
+        id="records-list-advanced-filters"
+        hidden={!advancedOpen}
+        className="grid gap-3 border-t border-border/80 pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">Branch</span>

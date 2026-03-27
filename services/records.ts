@@ -1,17 +1,20 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { branches, deliveryMethods, records, statuses } from "@/db/schema";
 import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
+import { formatZodError } from "@/lib/format-zod-error";
 import { loadRecordFieldConfig } from "@/lib/record-field-config";
 import { generateNextRecordNo } from "@/lib/record-no";
 import { requireAuth, requireManager } from "@/lib/permissions";
 
-const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateStr = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date");
 const optionalDateStr = z
   .union([z.literal(""), dateStr])
   .optional()
@@ -20,17 +23,49 @@ const optionalDateStr = z
 const recordFieldsSchema = z.object({
   dateReceived: dateStr,
   dateReturned: optionalDateStr,
-  branchId: z.string().min(1),
+  branchId: z.string().min(1, "Select a branch"),
   pcModel: z.string().min(1).max(500),
   serialNumber: z.string().min(1).max(500),
   tagNumber: z.string().max(500).optional(),
   maintenanceNote: z.string().max(10000).optional(),
   customerName: z.string().min(1).max(500),
   phoneNumber: z.string().min(1).max(80),
-  statusId: z.string().min(1),
-  deliveryMethodId: z.string().min(1),
+  statusId: z.string().min(1, "Select a status"),
+  deliveryMethodId: z.string().min(1, "Select a delivery method"),
   customData: z.record(z.string(), z.unknown()).optional(),
 });
+
+/** Other **active** (non-archived) rows only; same serial/tag allowed again after archive. */
+async function findActiveSerialDuplicate(
+  serial: string,
+  excludeRecordId?: string,
+) {
+  const db = getDb();
+  const parts = [eq(records.serialNumber, serial), isNull(records.deletedAt)];
+  if (excludeRecordId) {
+    parts.push(ne(records.id, excludeRecordId));
+  }
+  const [row] = await db
+    .select({ recordNo: records.recordNo })
+    .from(records)
+    .where(and(...parts))
+    .limit(1);
+  return row ?? null;
+}
+
+async function findActiveTagDuplicate(tag: string, excludeRecordId?: string) {
+  const db = getDb();
+  const parts = [eq(records.tagNumber, tag), isNull(records.deletedAt)];
+  if (excludeRecordId) {
+    parts.push(ne(records.id, excludeRecordId));
+  }
+  const [row] = await db
+    .select({ recordNo: records.recordNo })
+    .from(records)
+    .where(and(...parts))
+    .limit(1);
+  return row ?? null;
+}
 
 export async function fetchRecordLookups() {
   await requireAuth();
@@ -55,13 +90,36 @@ export async function fetchRecordLookups() {
 export async function createRecordAction(input: unknown) {
   const session = await requireAuth();
   const userId = (session.user as { id: string }).id;
-  const parsed = recordFieldsSchema.parse(input);
+  const parsedResult = recordFieldsSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const { systemVisibility, customFields } = await loadRecordFieldConfig();
   for (const f of customFields) {
     if (!f.isRequired) continue;
     const v = parsed.customData?.[f.key];
     if (v === undefined || v === null || String(v).trim() === "") {
       return { ok: false as const, error: `${f.label} is required.` };
+    }
+  }
+  const dupSerial = await findActiveSerialDuplicate(
+    parsed.serialNumber.trim(),
+  );
+  if (dupSerial) {
+    return {
+      ok: false as const,
+      error: `Serial number already used on ${dupSerial.recordNo}.`,
+    };
+  }
+  const tagTrim = parsed.tagNumber?.trim();
+  if (systemVisibility.tagNumber && tagTrim) {
+    const dupTag = await findActiveTagDuplicate(tagTrim);
+    if (dupTag) {
+      return {
+        ok: false as const,
+        error: `Tag number already used on ${dupTag.recordNo}.`,
+      };
     }
   }
   const id = randomUUID();
@@ -122,7 +180,11 @@ export async function updateRecordAction(input: unknown) {
   const session = await requireAuth();
   const userId = (session.user as { id: string }).id;
   const role = (session.user as { role?: string }).role;
-  const parsed = updateSchema.parse(input);
+  const parsedResult = updateSchema.safeParse(input);
+  if (!parsedResult.success) {
+    return { ok: false as const, error: formatZodError(parsedResult.error) };
+  }
+  const parsed = parsedResult.data;
   const db = getDb();
   const [existing] = await db
     .select()
@@ -135,6 +197,16 @@ export async function updateRecordAction(input: unknown) {
   if (role !== "manager" && existing.createdBy !== userId) {
     return { ok: false as const, error: "You cannot edit this record." };
   }
+  const dupSerial = await findActiveSerialDuplicate(
+    parsed.serialNumber.trim(),
+    parsed.recordId,
+  );
+  if (dupSerial) {
+    return {
+      ok: false as const,
+      error: `Serial number already used on ${dupSerial.recordNo}.`,
+    };
+  }
   const { systemVisibility, customFields } = await loadRecordFieldConfig();
   for (const f of customFields) {
     if (!f.isRequired) continue;
@@ -145,6 +217,16 @@ export async function updateRecordAction(input: unknown) {
     const v = merged[f.key];
     if (v === undefined || v === null || String(v).trim() === "") {
       return { ok: false as const, error: `${f.label} is required.` };
+    }
+  }
+  const tagTrim = parsed.tagNumber?.trim();
+  if (systemVisibility.tagNumber && tagTrim) {
+    const dupTag = await findActiveTagDuplicate(tagTrim, parsed.recordId);
+    if (dupTag) {
+      return {
+        ok: false as const,
+        error: `Tag number already used on ${dupTag.recordNo}.`,
+      };
     }
   }
   const tagNumber = systemVisibility.tagNumber
@@ -221,7 +303,11 @@ export async function updateRecordAction(input: unknown) {
 export async function archiveRecordAction(input: unknown) {
   const session = await requireManager();
   const actorId = (session.user as { id: string }).id;
-  const { recordId } = z.object({ recordId: z.string().min(1) }).parse(input);
+  const idResult = z.object({ recordId: z.string().min(1) }).safeParse(input);
+  if (!idResult.success) {
+    return { ok: false as const, error: formatZodError(idResult.error) };
+  }
+  const { recordId } = idResult.data;
   const db = getDb();
   const [existing] = await db
     .select()
@@ -257,7 +343,11 @@ export async function archiveRecordAction(input: unknown) {
 export async function restoreRecordAction(input: unknown) {
   const session = await requireManager();
   const actorId = (session.user as { id: string }).id;
-  const { recordId } = z.object({ recordId: z.string().min(1) }).parse(input);
+  const idResult = z.object({ recordId: z.string().min(1) }).safeParse(input);
+  if (!idResult.success) {
+    return { ok: false as const, error: formatZodError(idResult.error) };
+  }
+  const { recordId } = idResult.data;
   const db = getDb();
   const [existing] = await db
     .select()

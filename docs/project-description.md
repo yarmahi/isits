@@ -155,8 +155,8 @@ These are not in Excel but are strongly recommended for the application:
 ### Data Quality Notes
 
 - Use lookup tables for **branch**, **status**, and **delivery method** to keep data consistent.
-- Do **not** make `serial_number` and `tag_number` unique in version 1 unless the business confirms that duplicates are impossible.
-- Instead of blocking duplicates, show a warning when a similar serial number or tag number already exists.
+- Do **not** add database `UNIQUE` constraints on `serial_number` or `tag_number` in version 1.
+- **Active records only:** On save, the app rejects a serial or tag that matches another **non-archived** row (so two open cases cannot share the same serial/tag). **Archived** rows are ignored—after a case is archived, a new intake can reuse the same serial or tag for the same machine.
 - Normalize phone numbers for search if possible, but keep the original value for display.
 
 ---

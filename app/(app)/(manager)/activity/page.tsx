@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Activity as ActivityIcon } from "lucide-react";
 import { asc, count, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { activityLogs, user } from "@/db/schema";
@@ -18,6 +20,8 @@ import {
   parseActivityListParams,
   type ActivityListParsed,
 } from "@/lib/activity-list";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 /** Manager audit trail with filters (Phase 5). */
 export default async function ActivityPage({
@@ -101,11 +105,30 @@ export default async function ActivityPage({
           <TableBody>
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={7}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No activity matches these filters.
+                <TableCell colSpan={7} className="p-0">
+                  <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border/80">
+                      <ActivityIcon
+                        className="size-7 text-muted-foreground"
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="max-w-sm space-y-2">
+                      <p className="font-medium text-foreground">
+                        No activity matches
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Broaden the date range or clear search to see more log
+                        entries.
+                      </p>
+                    </div>
+                    <Link
+                      href="/activity"
+                      className={cn(buttonVariants({ variant: "outline" }))}
+                    >
+                      Clear filters
+                    </Link>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

@@ -162,7 +162,7 @@ Turn the records list page into the main operational workspace.
 - add URL-synced query state
 - build mobile card view and desktop table view
 - add indexes required for common filters and sorts
-- add duplicate warnings for serial number and tag number where helpful
+- add duplicate checks for serial number and tag number among **active** records where helpful
 
 ### Required Filters
 
@@ -313,7 +313,7 @@ Make the application polished, reliable, and pleasant to use.
 - refine mobile interactions for forms, filters, and navigation
 - add confirmation dialogs for risky actions
 - improve accessibility labels and keyboard support
-- add duplicate detection warnings where useful
+- add duplicate detection for serial/tag among active records where useful
 - ensure manager-only pages are clearly separated
 - improve consistency of record cards, tables, and details views
 

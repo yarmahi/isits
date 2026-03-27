@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSpecialistAction } from "@/services/users";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import { toastSuccess } from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -23,9 +23,11 @@ type Props = {
 export function UserCreateForm({ onFinished, onCancel }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setFormError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
     const name = String(fd.get("name") ?? "");
@@ -35,9 +37,10 @@ export function UserCreateForm({ onFinished, onCancel }: Props) {
     const res = await createSpecialistAction({ name, username, password });
     setPending(false);
     if (!res.ok) {
-      await toastError(
-        "Could not create user",
-        "error" in res ? res.error : "Something went wrong.",
+      setFormError(
+        "error" in res && typeof res.error === "string"
+          ? res.error
+          : "Could not create user.",
       );
       return;
     }

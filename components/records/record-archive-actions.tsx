@@ -2,9 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Swal from "sweetalert2";
 import { archiveRecordAction, restoreRecordAction } from "@/services/records";
-import { toastError, toastSuccess } from "@/lib/sweet-alert";
+import {
+  confirmDanger,
+  confirmNeutral,
+  toastError,
+  toastSuccess,
+} from "@/lib/sweet-alert";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -18,14 +22,12 @@ export function RecordArchiveActions({ recordId, archived }: Props) {
   const [pending, setPending] = useState(false);
 
   async function onArchive() {
-    const r = await Swal.fire({
+    const ok = await confirmDanger({
       title: "Archive this record?",
       text: "It will be hidden from the default list until restored.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Archive",
+      confirmText: "Archive",
     });
-    if (!r.isConfirmed) return;
+    if (!ok) return;
     setPending(true);
     const res = await archiveRecordAction({ recordId });
     setPending(false);
@@ -39,19 +41,19 @@ export function RecordArchiveActions({ recordId, archived }: Props) {
   }
 
   async function onRestore() {
-    const r = await Swal.fire({
+    const ok = await confirmNeutral({
       title: "Restore this record?",
       text: "It will appear in the active list again.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Restore",
+      confirmText: "Restore",
     });
-    if (!r.isConfirmed) return;
+    if (!ok) return;
     setPending(true);
     const res = await restoreRecordAction({ recordId });
     setPending(false);
     if (!res.ok) {
-      await toastError("Could not restore", "error" in res ? res.error : "");
+      const msg =
+        "error" in res && typeof res.error === "string" ? res.error : "";
+      await toastError("Could not restore", msg || undefined);
       return;
     }
     await toastSuccess("Record restored");
