@@ -234,3 +234,39 @@ export const recordsRelations = relations(records, ({ one }) => ({
     relationName: "recordUpdater",
   }),
 }));
+
+/** Audit trail (Phase 5): append-only activity log for managers. */
+export const activityLogs = pgTable(
+  "activity_logs",
+  {
+    id: text("id").primaryKey(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    eventType: text("event_type").notNull(),
+    actorUserId: text("actor_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    actorRole: text("actor_role"),
+    entityType: text("entity_type"),
+    entityId: text("entity_id"),
+    route: text("route"),
+    url: text("url"),
+    httpMethod: text("http_method"),
+    requestId: text("request_id"),
+    sessionId: text("session_id"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    browserName: text("browser_name"),
+    browserVersion: text("browser_version"),
+    osName: text("os_name"),
+    deviceType: text("device_type"),
+    beforeSnapshot: jsonb("before_snapshot").$type<Record<string, unknown>>(),
+    afterSnapshot: jsonb("after_snapshot").$type<Record<string, unknown>>(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    index("activity_logs_created_at_idx").on(table.createdAt),
+    index("activity_logs_event_type_idx").on(table.eventType),
+    index("activity_logs_actor_user_id_idx").on(table.actorUserId),
+    index("activity_logs_entity_idx").on(table.entityType, table.entityId),
+  ],
+);

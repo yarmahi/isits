@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { account, user } from "@/db/schema";
+import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
 import { requireManager } from "@/lib/permissions";
 import { syntheticEmailFromUsername, USERNAME_REGEX } from "@/lib/user-helpers";
 
@@ -29,7 +30,8 @@ const createSpecialistSchema = z.object({
 
 /** Creates a specialist account with username/password (manager-only). */
 export async function createSpecialistAction(input: unknown) {
-  await requireManager();
+  const session = await requireManager();
+  const actorId = (session.user as { id: string }).id;
   const parsed = createSpecialistSchema.parse(input);
   const uname = parsed.username.trim().toLowerCase();
   const db = getDb();
@@ -61,6 +63,21 @@ export async function createSpecialistAction(input: unknown) {
     }
     return { ok: false as const, error: msg };
   }
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "user_create",
+    actorUserId: actorId,
+    entityType: "user",
+    entityId: id,
+    route: "/users",
+    httpMethod: "POST",
+    ...meta,
+    afterSnapshot: {
+      name: parsed.name.trim(),
+      username: uname,
+      role: "specialist",
+    },
+  });
   revalidatePath("/users");
   return { ok: true as const };
 }
@@ -134,7 +151,9 @@ export async function updateUserAction(input: unknown) {
     }
     return { ok: false as const, error: msg };
   }
+  let passwordChanged = false;
   if (parsed.newPassword && parsed.newPassword.length >= 6) {
+    passwordChanged = true;
     const hashed = await hashPassword(parsed.newPassword);
     await db
       .update(account)
@@ -146,6 +165,27 @@ export async function updateUserAction(input: unknown) {
         ),
       );
   }
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "user_update",
+    actorUserId: sessionUserId,
+    entityType: "user",
+    entityId: parsed.userId,
+    route: "/users",
+    httpMethod: "POST",
+    ...meta,
+    beforeSnapshot: {
+      name: existing.name,
+      username: existing.username,
+      isActive: existing.isActive,
+    },
+    afterSnapshot: {
+      name: parsed.name.trim(),
+      username: uname,
+      isActive: parsed.isActive,
+    },
+    metadata: passwordChanged ? { passwordChanged: true } : undefined,
+  });
   revalidatePath("/users");
   return { ok: true as const };
 }
@@ -179,6 +219,18 @@ export async function setUserActiveAction(input: unknown) {
     .update(user)
     .set({ isActive: parsed.isActive, updatedAt: new Date() })
     .where(eq(user.id, parsed.userId));
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: parsed.isActive ? "user_activate" : "user_deactivate",
+    actorUserId: sessionUserId,
+    entityType: "user",
+    entityId: parsed.userId,
+    route: "/users",
+    httpMethod: "POST",
+    ...meta,
+    beforeSnapshot: { isActive: existing.isActive },
+    afterSnapshot: { isActive: parsed.isActive },
+  });
   revalidatePath("/users");
   return { ok: true as const };
 }

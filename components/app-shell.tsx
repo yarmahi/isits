@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { PageViewLogger } from "@/components/activity/page-view-logger";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -270,6 +271,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1 px-4 py-6 md:px-6 md:py-8">
+        <PageViewLogger />
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
     </div>

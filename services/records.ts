@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { branches, deliveryMethods, records, statuses } from "@/db/schema";
+import { getRequestMetaFromHeaders, writeAuditLog } from "@/lib/audit-log";
 import { generateNextRecordNo } from "@/lib/record-no";
 import { requireAuth, requireManager } from "@/lib/permissions";
 
@@ -74,6 +75,21 @@ export async function createRecordAction(input: unknown) {
     createdBy: userId,
     updatedBy: userId,
   });
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "record_create",
+    actorUserId: userId,
+    entityType: "record",
+    entityId: id,
+    route: "/records/new",
+    httpMethod: "POST",
+    ...meta,
+    afterSnapshot: {
+      recordNo,
+      customerName: parsed.customerName.trim(),
+      serialNumber: parsed.serialNumber.trim(),
+    },
+  });
   revalidatePath("/records");
   revalidatePath("/");
   return { ok: true as const, recordId: id };
@@ -100,6 +116,17 @@ export async function updateRecordAction(input: unknown) {
   if (role !== "manager" && existing.createdBy !== userId) {
     return { ok: false as const, error: "You cannot edit this record." };
   }
+  const beforeSnapshot = {
+    dateReceived: existing.dateReceived,
+    dateReturned: existing.dateReturned,
+    branchId: existing.branchId,
+    pcModel: existing.pcModel,
+    serialNumber: existing.serialNumber,
+    customerName: existing.customerName,
+    phoneNumber: existing.phoneNumber,
+    statusId: existing.statusId,
+    deliveryMethodId: existing.deliveryMethodId,
+  };
   await db
     .update(records)
     .set({
@@ -118,6 +145,28 @@ export async function updateRecordAction(input: unknown) {
       updatedAt: new Date(),
     })
     .where(eq(records.id, parsed.recordId));
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "record_update",
+    actorUserId: userId,
+    entityType: "record",
+    entityId: parsed.recordId,
+    route: `/records/${parsed.recordId}/edit`,
+    httpMethod: "POST",
+    ...meta,
+    beforeSnapshot,
+    afterSnapshot: {
+      dateReceived: parsed.dateReceived,
+      dateReturned: parsed.dateReturned ?? null,
+      branchId: parsed.branchId,
+      pcModel: parsed.pcModel.trim(),
+      serialNumber: parsed.serialNumber.trim(),
+      customerName: parsed.customerName.trim(),
+      phoneNumber: parsed.phoneNumber.trim(),
+      statusId: parsed.statusId,
+      deliveryMethodId: parsed.deliveryMethodId,
+    },
+  });
   revalidatePath("/records");
   revalidatePath(`/records/${parsed.recordId}`);
   revalidatePath("/");
@@ -125,7 +174,8 @@ export async function updateRecordAction(input: unknown) {
 }
 
 export async function archiveRecordAction(input: unknown) {
-  await requireManager();
+  const session = await requireManager();
+  const actorId = (session.user as { id: string }).id;
   const { recordId } = z.object({ recordId: z.string().min(1) }).parse(input);
   const db = getDb();
   const [existing] = await db
@@ -136,10 +186,23 @@ export async function archiveRecordAction(input: unknown) {
   if (!existing || existing.deletedAt) {
     return { ok: false as const, error: "Record not found." };
   }
+  const deletedAt = new Date();
   await db
     .update(records)
-    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .set({ deletedAt, updatedAt: new Date() })
     .where(eq(records.id, recordId));
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "record_archive",
+    actorUserId: actorId,
+    entityType: "record",
+    entityId: recordId,
+    route: "/records",
+    httpMethod: "POST",
+    ...meta,
+    beforeSnapshot: { recordNo: existing.recordNo, deletedAt: null },
+    afterSnapshot: { recordNo: existing.recordNo, deletedAt: deletedAt.toISOString() },
+  });
   revalidatePath("/records");
   revalidatePath(`/records/${recordId}`);
   revalidatePath("/");
@@ -147,7 +210,8 @@ export async function archiveRecordAction(input: unknown) {
 }
 
 export async function restoreRecordAction(input: unknown) {
-  await requireManager();
+  const session = await requireManager();
+  const actorId = (session.user as { id: string }).id;
   const { recordId } = z.object({ recordId: z.string().min(1) }).parse(input);
   const db = getDb();
   const [existing] = await db
@@ -158,10 +222,23 @@ export async function restoreRecordAction(input: unknown) {
   if (!existing || !existing.deletedAt) {
     return { ok: false as const, error: "Record not found or not archived." };
   }
+  const prevDeleted = existing.deletedAt.toISOString();
   await db
     .update(records)
     .set({ deletedAt: null, updatedAt: new Date() })
     .where(eq(records.id, recordId));
+  const meta = await getRequestMetaFromHeaders();
+  await writeAuditLog({
+    eventType: "record_restore",
+    actorUserId: actorId,
+    entityType: "record",
+    entityId: recordId,
+    route: `/records/${recordId}`,
+    httpMethod: "POST",
+    ...meta,
+    beforeSnapshot: { recordNo: existing.recordNo, deletedAt: prevDeleted },
+    afterSnapshot: { recordNo: existing.recordNo, deletedAt: null },
+  });
   revalidatePath("/records");
   revalidatePath(`/records/${recordId}`);
   revalidatePath("/");

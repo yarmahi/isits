@@ -8,6 +8,7 @@ import { getDb } from "@/db";
 import * as schema from "@/db/schema";
 import { user } from "@/db/schema";
 import { getBetterAuthBaseUrl, getBetterAuthSecret } from "@/lib/env";
+import { writeAuditLog } from "@/lib/audit-log";
 
 const baseURL = getBetterAuthBaseUrl();
 const secret = getBetterAuthSecret();
@@ -66,6 +67,28 @@ export const auth = betterAuth({
                 "Your account is deactivated. Please contact an administrator.",
             });
           }
+        },
+        after: async (sess) => {
+          await writeAuditLog({
+            eventType: "login",
+            actorUserId: sess.userId,
+            entityType: "session",
+            entityId: sess.id,
+            sessionId: sess.id,
+            afterSnapshot: { sessionId: sess.id, userId: sess.userId },
+          });
+        },
+      },
+      delete: {
+        after: async (sess) => {
+          await writeAuditLog({
+            eventType: "logout",
+            actorUserId: sess.userId,
+            entityType: "session",
+            entityId: sess.id,
+            sessionId: sess.id,
+            metadata: { source: "session_delete" },
+          });
         },
       },
     },

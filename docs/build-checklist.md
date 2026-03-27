@@ -121,40 +121,40 @@ Use this checklist while implementing the phased plan.
 
 ## Phase 5 - Detailed Activity Log and Audit Trail
 
-- [ ] Create `activity_logs` table.
-- [ ] Create centralized audit logging utility.
-- [ ] Log successful login events.
-- [ ] Log logout events.
-- [ ] Log page views for authenticated page visits.
-- [ ] Log record create events.
-- [ ] Log record update events.
-- [ ] Log record archive events.
-- [ ] Log record restore events.
-- [ ] Log user create events.
-- [ ] Log user update events.
-- [ ] Log user activate/deactivate events.
-- [ ] Capture actor user id and role.
-- [ ] Capture entity type and entity id.
-- [ ] Capture route and URL.
-- [ ] Capture HTTP method.
-- [ ] Capture request id.
-- [ ] Capture session id when available.
-- [ ] Capture IP address.
-- [ ] Capture raw user agent.
-- [ ] Parse and store browser name and version.
-- [ ] Parse and store operating system.
-- [ ] Parse and store device type.
-- [ ] Store before/after JSON snapshots for updates.
-- [ ] Exclude secrets and sensitive values from logs.
-- [ ] Build manager-only activity log page.
-- [ ] Add activity log filters for date, event type, actor, entity type, entity id, and IP.
+- [x] Create `activity_logs` table.
+- [x] Create centralized audit logging utility.
+- [x] Log successful login events.
+- [x] Log logout events.
+- [x] Log page views for authenticated page visits.
+- [x] Log record create events.
+- [x] Log record update events.
+- [x] Log record archive events.
+- [x] Log record restore events.
+- [x] Log user create events.
+- [x] Log user update events.
+- [x] Log user activate/deactivate events.
+- [x] Capture actor user id and role.
+- [x] Capture entity type and entity id.
+- [x] Capture route and URL.
+- [x] Capture HTTP method.
+- [x] Capture request id.
+- [x] Capture session id when available.
+- [x] Capture IP address.
+- [x] Capture raw user agent.
+- [x] Parse and store browser name and version.
+- [x] Parse and store operating system.
+- [x] Parse and store device type.
+- [x] Store before/after JSON snapshots for updates.
+- [x] Exclude secrets and sensitive values from logs.
+- [x] Build manager-only activity log page.
+- [x] Add activity log filters for date, event type, actor, entity type, entity id, and IP.
 
 ### Phase 5 Done When
 
-- [ ] The manager can inspect the audit trail.
-- [ ] All major actions appear in the log.
-- [ ] Log entries include request metadata.
-- [ ] No secret data is stored in the logs.
+- [x] The manager can inspect the audit trail.
+- [x] All major actions appear in the log.
+- [x] Log entries include request metadata.
+- [x] No secret data is stored in the logs.
 
 ---
 

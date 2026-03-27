@@ -25,6 +25,9 @@ import {
 } from "@/lib/records-list";
 import { RecordsCreatedToast } from "@/components/records/records-created-toast";
 import { RecordsListFilters } from "@/components/records/records-list-filters";
+import { RecordRowActions } from "@/components/records/record-row-actions";
+import { RecordStatusBadge } from "@/components/records/record-status-badge";
+import { formatRecordDate } from "@/lib/format";
 
 /** Records list: search, filters, sort, URL state, pagination, mobile cards (Phase 4). */
 export default async function RecordsListPage({
@@ -56,9 +59,16 @@ export default async function RecordsListPage({
     .select({
       id: records.id,
       recordNo: records.recordNo,
+      pcModel: records.pcModel,
+      serialNumber: records.serialNumber,
       customerName: records.customerName,
-      createdAt: records.createdAt,
+      phoneNumber: records.phoneNumber,
+      dateReceived: records.dateReceived,
+      dateReturned: records.dateReturned,
+      deletedAt: records.deletedAt,
+      createdBy: records.createdBy,
       statusName: statuses.name,
+      statusCode: statuses.code,
     })
     .from(records)
     .innerJoin(statuses, eq(records.statusId, statuses.id))
@@ -128,38 +138,64 @@ export default async function RecordsListPage({
           </div>
         ) : (
           <>
-            <div className="hidden overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm md:block">
+            <div className="hidden overflow-x-auto rounded-xl border border-border/80 bg-card shadow-sm md:block">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="px-4">Record</TableHead>
-                    <TableHead className="px-4">Customer</TableHead>
-                    <TableHead className="px-4">Status</TableHead>
-                    <TableHead className="px-4">Created</TableHead>
-                    <TableHead className="px-4 text-right"> </TableHead>
+                    <TableHead className="whitespace-nowrap px-3">Record</TableHead>
+                    <TableHead className="min-w-[7rem] px-3">PC</TableHead>
+                    <TableHead className="min-w-[7rem] px-3">Serial</TableHead>
+                    <TableHead className="min-w-[7rem] px-3">Name</TableHead>
+                    <TableHead className="whitespace-nowrap px-3">Phone</TableHead>
+                    <TableHead className="whitespace-nowrap px-3">
+                      Received
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-3">
+                      Returned
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-3">Status</TableHead>
+                    <TableHead className="px-3 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
                     <TableRow key={r.id}>
-                      <TableCell className="px-4 font-mono text-sm font-medium">
+                      <TableCell className="whitespace-nowrap px-3 font-mono text-sm font-medium">
                         {r.recordNo}
                       </TableCell>
-                      <TableCell className="px-4">{r.customerName}</TableCell>
-                      <TableCell className="px-4">{r.statusName}</TableCell>
-                      <TableCell className="px-4 text-muted-foreground">
-                        {r.createdAt.toLocaleString(undefined, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
+                      <TableCell className="max-w-[10rem] truncate px-3 text-sm">
+                        {r.pcModel}
                       </TableCell>
-                      <TableCell className="px-4 text-right">
-                        <Link
-                          href={`/records/${r.id}`}
-                          className="text-sm font-medium text-primary hover:underline"
-                        >
-                          Open
-                        </Link>
+                      <TableCell className="max-w-[10rem] truncate px-3 font-mono text-xs">
+                        {r.serialNumber}
+                      </TableCell>
+                      <TableCell className="max-w-[10rem] truncate px-3 text-sm">
+                        {r.customerName}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap px-3 text-sm">
+                        {r.phoneNumber}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap px-3 text-sm text-muted-foreground">
+                        {formatRecordDate(r.dateReceived)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap px-3 text-sm text-muted-foreground">
+                        {formatRecordDate(r.dateReturned)}
+                      </TableCell>
+                      <TableCell className="px-3">
+                        <RecordStatusBadge
+                          name={r.statusName}
+                          code={r.statusCode}
+                        />
+                      </TableCell>
+                      <TableCell className="px-3 text-right">
+                        <RecordRowActions
+                          recordId={r.id}
+                          canEdit={
+                            !r.deletedAt &&
+                            (isManager || r.createdBy === userId)
+                          }
+                          canArchive={isManager && !r.deletedAt}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -182,21 +218,58 @@ export default async function RecordsListPage({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-mono text-sm font-medium">{r.recordNo}</p>
-                    <Link
-                      href={`/records/${r.id}`}
-                      className="shrink-0 text-sm font-medium text-primary hover:underline"
-                    >
-                      Open
-                    </Link>
+                    <RecordRowActions
+                      recordId={r.id}
+                      canEdit={
+                        !r.deletedAt &&
+                        (isManager || r.createdBy === userId)
+                      }
+                      canArchive={isManager && !r.deletedAt}
+                    />
                   </div>
-                  <p className="mt-1 text-sm">{r.customerName}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{r.statusName}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {r.createdAt.toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
+                  <dl className="mt-3 grid gap-1.5 text-sm">
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">PC</dt>
+                      <dd className="max-w-[60%] truncate text-right">{r.pcModel}</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Serial</dt>
+                      <dd className="max-w-[60%] truncate text-right font-mono text-xs">
+                        {r.serialNumber}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Name</dt>
+                      <dd className="max-w-[60%] truncate text-right">
+                        {r.customerName}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Phone</dt>
+                      <dd className="text-right">{r.phoneNumber}</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Received</dt>
+                      <dd className="text-right text-muted-foreground">
+                        {formatRecordDate(r.dateReceived)}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">Returned</dt>
+                      <dd className="text-right text-muted-foreground">
+                        {formatRecordDate(r.dateReturned)}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <dt className="text-muted-foreground">Status</dt>
+                      <dd>
+                        <RecordStatusBadge
+                          name={r.statusName}
+                          code={r.statusCode}
+                        />
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
               ))}
               <TablePagination
