@@ -58,9 +58,9 @@ This document tracks **Chapter 2** work: a unified **Settings** experience for l
 
 ## Phase D — Delivery methods CRUD
 
-- [ ] **Server actions** for `delivery_methods`: `code`, `name`, `sort_order`, `is_active`, timestamps.
-- [ ] Same UX pattern as Phase B/C: table, modals, pagination, no filters, no View column.
-- [ ] Unique `code` validation; FK safety for `records.delivery_method_id`.
+- [x] **Server actions** for `delivery_methods`: `code`, `name`, `sort_order`, `is_active`, timestamps.
+- [x] Same UX pattern as Phase B/C: table, modals, pagination, no filters, no View column.
+- [x] Unique `code` validation; FK safety for `records.delivery_method_id`.
 
 ---
 
