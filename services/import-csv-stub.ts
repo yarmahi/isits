@@ -12,5 +12,7 @@ export async function stubImportCsvAction(
     return { ok: false, error: "No file uploaded." };
   }
   const text = await file.text();
-  return validateCsvImport(file.name, text);
+  const v = validateCsvImport(file.name, text);
+  if (!v.ok) return v;
+  return { ok: true as const, message: "CSV file is valid (import not implemented here)." };
 }

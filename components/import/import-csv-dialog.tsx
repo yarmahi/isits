@@ -27,6 +27,8 @@ type Props = {
   exampleRow?: readonly string[] | string[];
   /** Called with the chosen file; Phase B+ performs real imports. */
   onImport: (file: File) => Promise<ImportCsvResult>;
+  /** Runs after a successful import (e.g. router.refresh). */
+  onSuccess?: () => void;
 };
 
 function downloadTemplate(
@@ -55,6 +57,7 @@ export function ImportCsvDialog({
   headers,
   exampleRow,
   onImport,
+  onSuccess,
 }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
@@ -76,7 +79,11 @@ export function ImportCsvDialog({
         await toastError("Import failed", res.error);
         return;
       }
-      await toastSuccess("File accepted", "Import runs in a later phase.");
+      await toastSuccess(
+        "Import finished",
+        res.message ?? "File accepted.",
+      );
+      onSuccess?.();
       resetAndClose();
     } finally {
       setPending(false);

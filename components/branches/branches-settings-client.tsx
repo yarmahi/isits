@@ -39,7 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ImportCsvDialog } from "@/components/import/import-csv-dialog";
 import { BRANCHES_IMPORT } from "@/lib/import-csv-templates";
-import { stubCsvImportFromFile } from "@/lib/stub-csv-import-client";
+import { importBranchesCsvFromFile } from "@/lib/branches-import-csv-client";
 
 export const BRANCHES_DEFAULT_PAGE_SIZE = 10;
 
@@ -392,7 +392,8 @@ export function BranchesSettingsClient({
         templateFilename={BRANCHES_IMPORT.filename}
         headers={BRANCHES_IMPORT.headers}
         exampleRow={BRANCHES_IMPORT.exampleRow}
-        onImport={stubCsvImportFromFile}
+        onImport={importBranchesCsvFromFile}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );

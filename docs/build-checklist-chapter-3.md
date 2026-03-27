@@ -25,7 +25,7 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 - [x] **Modal** (Dialog): short title; optional one-line description kept concise per project copy style.
 - [x] **Download sample CSV** (static template or route handler that returns `text/csv` with header row + example row(s)).
 - [x] **File input** for `.csv` (and reject non-CSV with a clear message).
-- [ ] **Parsing**: robust handling of UTF-8, quoted fields, commas in values (use a vetted CSV parser or well-tested split rules—document choice).
+- [x] **Parsing**: robust handling of UTF-8, quoted fields, commas in values (use a vetted CSV parser or well-tested split rules—document choice). **Implementation:** [papaparse](https://www.papaparse.com/) via `lib/parse-csv.ts` (Phase B+).
 - [ ] **Validation**: row-level errors; block or partial-apply policy chosen in Phase F.
 - [ ] **Permissions**:
   - [ ] **Settings lookups**: **manager-only** (same as existing settings routes).
@@ -46,10 +46,12 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Phase B — Branches CSV import
 
-- [ ] **Template columns** (suggested): `name`, `is_active` (optional, default true); `id` optional if importing fixed ids—if omitted, generate UUIDs server-side.
-- [ ] **Server action** (or service): parse CSV → validate → `insert` / `on conflict` policy (insert-only vs upsert by id—**decide**).
-- [ ] **Revalidate** `/settings/branches`, `/records`, `/records/new` after success.
-- [ ] **Empty / duplicate** handling documented (skip duplicates by name?—**decide**).
+- [x] **Template columns** (suggested): `name`, `is_active` (optional, default true); `id` optional if importing fixed ids—if omitted, generate UUIDs server-side.
+- [x] **Server action** (or service): parse CSV → validate → `insert` / `on conflict` policy (insert-only vs upsert by id—**decide**).
+- [x] **Revalidate** `/settings/branches`, `/records`, `/records/new` after success.
+- [x] **Empty / duplicate** handling documented (skip duplicates by name?—**decide**).
+
+**Decisions (v1):** Optional `id`: existing id → update `name` / `is_active`; new id → insert. No `id` → insert with random UUID only if that name (case-insensitive) is not already in the DB. Duplicate name in the same file (case-insensitive) → later rows skipped. Empty `name` row → skipped. See `services/import-branches-csv.ts`.
 
 ---
 
@@ -97,7 +99,7 @@ This document tracks **Chapter 3** work: **bulk import from CSV** for lookup tab
 
 ## Implementation notes (for developers)
 
-- **CSV library**: Prefer a small, maintained parser (e.g. `papaparse` or `csv-parse`) over hand-rolled split—add dependency deliberately.
+- **CSV library**: **papaparse** (`lib/parse-csv.ts`) — prefer over hand-rolled split; add dependency deliberately.
 - **Security**: never execute CSV as code; validate types and length; scan for absurdly large payloads.
 - **Neon / serverless**: batch inserts in chunks to avoid statement timeouts on huge files.
 - **Placeholder strings** for legacy imports must remain **unique** where the schema requires uniqueness (`record_no`, `serial_number` uniqueness rules—check `services/records` and migrations).

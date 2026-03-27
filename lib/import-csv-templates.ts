@@ -2,8 +2,9 @@
 
 export const BRANCHES_IMPORT = {
   filename: "branches-template.csv",
-  headers: ["name", "is_active"],
-  exampleRow: ["Main office", "true"],
+  /** `id` optional — leave empty to assign a new id server-side. */
+  headers: ["id", "name", "is_active"],
+  exampleRow: ["", "Main office", "true"],
 } as const;
 
 export const STATUSES_IMPORT = {
